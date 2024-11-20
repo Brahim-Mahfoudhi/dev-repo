@@ -70,20 +70,20 @@ pipeline {
         stage('Running Unit Tests') {
             steps {
                 echo 'Running unit tests and collecting Clover coverage data...'
-                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/Rise.Domain.Tests/coverage.xml' /p:CoverletOutputFormat=clover"
+                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' /p:CoverletOutputFormat=clover"
             }
         }
     
         stage('Coverage Report') {
             steps {
                 sh "ls -l /var/lib/jenkins/agent/workspace/dotnet_pipeline/"
-                sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/Rise.Domain.Tests/coverage.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
+                sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
                 echo 'Publishing Clover coverage report...'
                 publishHTML([
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/',
+                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage',
                     reportFiles: 'index.html',
                     reportName: 'Clover Coverage Report'
                 ])
