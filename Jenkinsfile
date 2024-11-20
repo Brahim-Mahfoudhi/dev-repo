@@ -77,7 +77,7 @@ pipeline {
         stage('Coverage Report') {
             steps {
                 sh "ls -l /var/lib/jenkins/agent/workspace/dotnet_pipeline/"
-                sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
+                sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
                 echo 'Publishing Clover coverage report...'
                 publishHTML([
                     allowMissing: false,
