@@ -6,20 +6,20 @@ pipeline {
 
     environment {
         JENKINS_SERVER = 'http://172.16.128.100:8080' //NEEDS TO BE CHANGED
-        DOTNET_PROJECT_PATH = 'dotnet-2425-tiao1/Rise.Server/Rise.Server.csproj'
-        DOTNET_TEST_PATH = 'dotnet-2425-tiao1/Rise.Domain.Tests/Rise.Domain.Tests.csproj'
+        DOTNET_PROJECT_PATH = 'Rise.Server/Rise.Server.csproj'
+        DOTNET_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
         PUBLISH_OUTPUT = 'publish'
         DOTNET_ENVIRONMENT = 'Production'
         DOTNET_CONNECTION_STRING = 'Server=localhost,1433;Database=SportStore;User Id=sa;Password=Drgnnrblnc19;Trusted_Connection=False;MultipleActiveResultSets=True;' // NEEDS TO BE CHANGED
-        DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
+        //DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
         JENKINS_CREDENTIALS_ID = "jenkins-master-key"
         SSH_KEY_FILE = '/var/lib/jenkins/.ssh/id_rsa'
         REMOTE_HOST = 'jenkins@172.16.128.101' // NEEDS TO BE CHANGED
         COVERAGE_REPORT_PATH = '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml'
         COVERAGE_REPORT_DIR = '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/'
-        TRX_FILE_PATH = 'dotnet-2425-tiao1/Rise.Domain.Tests/TestResults/test-results.trx'
-        TEST_RESULT_PATH = 'dotnet-2425-tiao1/Rise.Domain.Tests/TestResults'
-        TRX_TO_XML_PATH = 'dotnet-2425-tiao1/Rise.Domain.Tests/TestResults/test-results.xml'
+        TRX_FILE_PATH = 'Rise.Domain.Tests/TestResults/test-results.trx'
+        TEST_RESULT_PATH = 'Rise.Domain.Tests/TestResults'
+        TRX_TO_XML_PATH = 'Rise.Domain.Tests/TestResults/test-results.xml'
         PUBLISH_DIR_PATH = '/var/lib/jenkins/artifacts/'
     }
 
