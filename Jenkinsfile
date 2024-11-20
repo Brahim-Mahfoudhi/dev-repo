@@ -69,19 +69,29 @@ pipeline {
 
         stage('Running Unit Tests') {
             steps {
-                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.' /p:CoverletOutputFormat=opencover"
+                echo 'Running unit tests and collecting coverage data...'
+                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.opencover.xml' /p:CoverletOutputFormat=opencover"
             }
         }
-
+        
         stage('Coverage Report') {
             steps {
                 echo 'Generating and publishing code coverage report...'
                 script {
-                    sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' /p:CoverletOutputFormat=cobertura"
+                    // Use the reportgenerator tool to create an HTML report from the collected OpenCover data
+                    sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.opencover.xml' -targetdir:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/' -reporttypes:Html"
                 }
-                publishCoverage adapters: [coberturaAdapter('coverage/coverage.cobertura.xml')], sourceFileResolver: sourceFiles('NEVER_STORE')
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/',
+                    reportFiles: 'index.html',
+                    reportName: 'Code Coverage Report'
+                ])
             }
         }
+
 
         
     /*
