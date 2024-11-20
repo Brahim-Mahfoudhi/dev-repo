@@ -70,13 +70,14 @@ pipeline {
         stage('Running Unit Tests') {
             steps {
                 echo 'Running unit tests and collecting Clover coverage data...'
-                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage.clover.xml' /p:CoverletOutputFormat=clover"
+                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage.xml' /p:CoverletOutputFormat=clover"
             }
         }
     
         stage('Coverage Report') {
             steps {
-                sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage.clover.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
+                sh "ls -l /var/lib/jenkins/agent/workspace/dotnet_pipeline/"
+                sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
                 echo 'Publishing Clover coverage report...'
                 publishHTML([
                     allowMissing: false,
