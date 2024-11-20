@@ -80,16 +80,18 @@ pipeline {
         
         stage('Coverage Report') {
             steps {
-                def coverageDir = sh(script: "find /var/lib/jenkins/agent/workspace/dotnet_pipeline/Rise.Domain.Tests/TestResults/ -type f -name 'coverage.cobertura.xml' | head -n 1", returnStdout: true).trim()
-                sh """
-                    mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
-                    cp ${coverageDir} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml
-                """
-                
-                sh """
-                    /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml \
-                    -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html
-                """
+                script {
+                    def coverageDir = sh(script: "find /var/lib/jenkins/agent/workspace/dotnet_pipeline/Rise.Domain.Tests/TestResults/ -type f -name 'coverage.cobertura.xml' | head -n 1", returnStdout: true).trim()
+                    sh """
+                        mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
+                        cp ${coverageDir} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml
+                    """
+                    
+                    sh """
+                        /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml \
+                        -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html
+                    """
+                }
                 echo 'Publishing coverage report...'
                 publishHTML([
                     allowMissing: false,
