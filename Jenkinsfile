@@ -72,17 +72,17 @@ pipeline {
                 sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' /p:CoverletOutputFormat=cobertura"
             }
         }
-
+/*
         stage('Coverage Report') {
             steps {
                 echo 'Generating code coverage report...'
                 script {
-                    sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' -targetdir:${COVERAGE_REPORT_DIR} -reporttypes:Html"
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true, reportDir: COVERAGE_REPORT_DIR, reportFiles: 'index.html', reportName: 'Coverage Report'])
+                    sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true, reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/', reportFiles: 'index.html', reportName: 'Coverage Report'])
                 }
             }
         }
-
+*/
         stage('Publish Application') {
             steps {
                 sh "dotnet publish ${DOTNET_PROJECT_PATH} -c Release -o ${PUBLISH_OUTPUT}"
