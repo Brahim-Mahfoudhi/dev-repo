@@ -75,6 +75,18 @@ pipeline {
 
         stage('Coverage Report') {
             steps {
+                echo 'Generating and publishing code coverage report...'
+                script {
+                    sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' /p:CoverletOutputFormat=cobertura"
+                }
+                publishCoverage adapters: [coberturaAdapter('coverage/coverage.cobertura.xml')], sourceFileResolver: sourceFiles('NEVER_STORE')
+            }
+        }
+
+        
+    /*
+        stage('Coverage Report') {
+            steps {
                 echo 'Generating code coverage report...'
                 script {
                     sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
@@ -82,6 +94,8 @@ pipeline {
                 }
             }
         }
+
+    */
 
         stage('Publish Application') {
             steps {
