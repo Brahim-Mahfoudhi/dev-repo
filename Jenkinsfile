@@ -69,7 +69,7 @@ pipeline {
 
         stage('Running Unit Tests') {
             steps {
-                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' /p:CoverletOutputFormat=cobertura"
+                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.' /p:CoverletOutputFormat=opencover"
             }
         }
 
