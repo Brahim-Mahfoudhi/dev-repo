@@ -88,7 +88,8 @@ pipeline {
                     if (coverageFiles) {
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
-                            /home/jenkins/.dotnet/tools/reportgenerator -reports:${coverageFiles} -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
+                            cp ${coverageFiles} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
+                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
                         """
                     } else {
                         error 'No coverage files found!'
