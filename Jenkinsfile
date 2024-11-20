@@ -76,13 +76,14 @@ pipeline {
     
         stage('Coverage Report') {
             steps {
+                sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage.clover.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
                 echo 'Publishing Clover coverage report...'
                 publishHTML([
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
                     reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/',
-                    reportFiles: 'coverage.clover.xml',
+                    reportFiles: 'index.html',
                     reportName: 'Clover Coverage Report'
                 ])
             }
@@ -94,7 +95,13 @@ pipeline {
                 echo 'Generating code coverage report...'
                 script {
                     sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true, reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/', reportFiles: 'index.html', reportName: 'Coverage Report'])
+                    publishHTML([
+                    allowMissing: false, 
+                    alwaysLinkToLastBuild: false, 
+                    keepAll: true, 
+                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/', 
+                    reportFiles: 'index.html',
+                    reportName: 'Coverage Report'])
                 }
             }
         }
