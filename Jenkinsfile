@@ -72,7 +72,7 @@ pipeline {
 
         stage('Running Unit Tests') {
             steps {
-                sh mkdir -p '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage'
+                sh 'mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage'
                 sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput=${COVERAGE_REPORT_PATH} /p:CoverletOutputFormat=cobertura"
             }
         }
