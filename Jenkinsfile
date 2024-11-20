@@ -72,7 +72,7 @@ pipeline {
                 sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' /p:CoverletOutputFormat=cobertura"
             }
         }
-/*
+
         stage('Coverage Report') {
             steps {
                 echo 'Generating code coverage report...'
@@ -82,7 +82,7 @@ pipeline {
                 }
             }
         }
-*/
+
         stage('Publish Application') {
             steps {
                 sh "dotnet publish ${DOTNET_PROJECT_PATH} -c Release -o ${PUBLISH_OUTPUT}"
