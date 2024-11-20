@@ -69,7 +69,7 @@ pipeline {
 
         stage('Running Unit Tests') {
             steps {
-                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput=${COVERAGE_REPORT_PATH} /p:CoverletOutputFormat=cobertura"
+                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' /p:CoverletOutputFormat=cobertura"
             }
         }
 
@@ -77,7 +77,7 @@ pipeline {
             steps {
                 echo 'Generating code coverage report...'
                 script {
-                    sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:${COVERAGE_REPORT_PATH} -targetdir:${COVERAGE_REPORT_DIR} -reporttypes:Html"
+                    sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' -targetdir:${COVERAGE_REPORT_DIR} -reporttypes:Html"
                     publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true, reportDir: COVERAGE_REPORT_DIR, reportFiles: 'index.html', reportName: 'Coverage Report'])
                 }
             }
