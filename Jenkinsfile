@@ -70,7 +70,7 @@ pipeline {
         stage('Running Unit Tests') {
             steps {
                 echo 'Running unit tests and collecting Clover coverage data...'
-                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.clover.xml' /p:CoverletOutputFormat=clover"
+                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage.clover.xml' /p:CoverletOutputFormat=clover"
             }
         }
     
@@ -81,7 +81,7 @@ pipeline {
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/',
+                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/',
                     reportFiles: 'coverage.clover.xml',
                     reportName: 'Clover Coverage Report'
                 ])
