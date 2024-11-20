@@ -69,31 +69,25 @@ pipeline {
 
         stage('Running Unit Tests') {
             steps {
-                echo 'Running unit tests and collecting coverage data...'
-                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.opencover.xml' /p:CoverletOutputFormat=opencover"
+                echo 'Running unit tests and collecting Clover coverage data...'
+                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.clover.xml' /p:CoverletOutputFormat=clover"
             }
         }
-        
+    
         stage('Coverage Report') {
             steps {
-                echo 'Generating and publishing code coverage report...'
-                script {
-                    // Use the reportgenerator tool to create an HTML report from the collected OpenCover data
-                    sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.opencover.xml' -targetdir:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/' -reporttypes:Html"
-                }
+                echo 'Publishing Clover coverage report...'
                 publishHTML([
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/',
-                    reportFiles: 'index.html',
-                    reportName: 'Code Coverage Report'
+                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/',
+                    reportFiles: 'coverage.clover.xml',
+                    reportName: 'Clover Coverage Report'
                 ])
             }
         }
 
-
-        
     /*
         stage('Coverage Report') {
             steps {
