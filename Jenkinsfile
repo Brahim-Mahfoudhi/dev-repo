@@ -87,7 +87,7 @@ pipeline {
                     /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
                 """
                 sh """
-                    /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml \
+                    /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
                     -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html
                 """
                 echo 'Publishing coverage report...'
