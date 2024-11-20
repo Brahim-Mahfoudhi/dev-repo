@@ -14,7 +14,7 @@ pipeline {
         SSH_KEY_FILE = '/var/lib/jenkins/.ssh/id_rsa'
         REMOTE_HOST = 'jenkins@139.162.148.79' // NEEDS TO BE CHANGED
         COVERAGE_REPORT_PATH = '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml'
-        COVERAGE_REPORT_DIR = '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/'
+        COVERAGE_REPORT_DIR = '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report'
         TRX_FILE_PATH = 'dotnet-2425-tiao1/Rise.Domain.Tests/TestResults/test-results.trx'
         TEST_RESULT_PATH = 'Rise.Domain.Tests/TestResults'
         TRX_TO_XML_PATH = 'Rise.Domain.Tests/TestResults/test-results.xml'
@@ -73,7 +73,7 @@ pipeline {
         stage('Running Unit Tests') {
             steps {
                 sh 'mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage'
-                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput=${COVERAGE_REPORT_PATH} /p:CoverletOutputFormat=cobertura"
+                sh "dotnet test ${DOTNET_TEST_PATH} --logger 'trx;LogFileName=test-results.trx' /p:CollectCoverage=true /p:CoverletOutput=/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml /p:CoverletOutputFormat=cobertura"
             }
         }
   
