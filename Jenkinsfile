@@ -82,7 +82,7 @@ pipeline {
             steps {
                 // Copy all the coverage files into the target directory
                 sh """
-                    sudo cp /var/lib/jenkins/agent/workspace/dotnet_pipeline/Rise.Domain.Tests/TestResults/*/coverage.cobertura.xml \
+                    cp /var/lib/jenkins/agent/workspace/dotnet_pipeline/Rise.Domain.Tests/TestResults/*/coverage.cobertura.xml \
                     /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
                 """
                 sh """
