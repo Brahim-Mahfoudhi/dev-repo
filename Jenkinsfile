@@ -81,16 +81,18 @@ pipeline {
         stage('Coverage Report') {
             steps {
                 script {
-                    def coverageDir = sh(script: "find /var/lib/jenkins/agent/workspace/dotnet_pipeline/Rise.Domain.Tests/TestResults/ -type f -name 'coverage.cobertura.xml' | head -n 1", returnStdout: true).trim()
-                    sh """
-                        mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
-                        cp ${coverageDir} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml
-                    """
-                    
-                    sh """
-                        /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml \
-                        -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html
-                    """
+                    def testOutput = sh(script: "dotnet test ${DOTNET_TEST_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
+                    def coverageFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }.join(';')
+                    echo "Found coverage files: ${coverageFiles}"
+        
+                    if (coverageFiles) {
+                        sh """
+                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
+                            dotnet reportgenerator -reports:${coverageFiles} -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
+                        """
+                    } else {
+                        error 'No coverage files found!'
+                    }
                 }
                 echo 'Publishing coverage report...'
                 publishHTML([
@@ -103,6 +105,7 @@ pipeline {
                 ])
             }
         }
+
     /*
         stage('Coverage Report') {
             steps {
