@@ -23,7 +23,7 @@ pipeline {
         PUBLISH_DIR_PATH = '/var/lib/jenkins/artifacts/'
     }
 
-    stages {
+     stages {
         stage('Clean Workspace') {
             steps {
                 cleanWs()
@@ -83,7 +83,7 @@ pipeline {
                 script {
                     def testOutput = sh(script: "dotnet test ${DOTNET_TEST_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
                     def coverageFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }.join(';')
-                    echo "Found coverage files: ${coverageFiles}"
+                    echo "Coverage files: ${coverageFiles}"
         
                     if (coverageFiles) {
                         sh """
@@ -93,7 +93,7 @@ pipeline {
                             /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
                         """
                     } else {
-                        error 'No coverage files found!'
+                        error 'No coverage files found'
                     }
                 }
                 echo 'Publishing coverage report...'
@@ -108,26 +108,7 @@ pipeline {
             }
         }
 
-
-    /*
-        stage('Coverage Report') {
-            steps {
-                echo 'Generating code coverage report...'
-                script {
-                    sh "/home/jenkins/.dotnet/tools/reportgenerator -reports:'/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml' -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttypes:Html"
-                    publishHTML([
-                    allowMissing: false, 
-                    alwaysLinkToLastBuild: false, 
-                    keepAll: true, 
-                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/', 
-                    reportFiles: 'index.html',
-                    reportName: 'Coverage Report'])
-                }
-            }
-        }
-
-    */
-
+    
         stage('Publish Application') {
             steps {
                 sh "dotnet publish ${DOTNET_PROJECT_PATH} -c Release -o ${PUBLISH_OUTPUT}"
@@ -182,10 +163,10 @@ def sendDiscordNotification(status) {
                 **Branch**: ${env.GIT_BRANCH}
                 **Message**: ${env.GIT_COMMIT_MESSAGE}
                 
-                [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console) - Build output
-                [**Test result**](${JENKINS_SERVER}/job/dotnet_pipeline/lastBuild/testReport/) - Test result
-                [**Coverage report**](${JENKINS_SERVER}/job/dotnet_pipeline/lastBuild/Coverage_20Report/) - Coverage report
-                [**History**](${JENKINS_SERVER}/job/dotnet_pipeline/${env.BUILD_NUMBER}/testReport/history/) - History
+                [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
+                [**Test result**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
+                [**Coverage report**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
+                [**History**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
             """,
             footer: "Build Duration: ${currentBuild.durationString.replace(' and counting', '')}",
             webhookURL: DISCORD_WEBHOOK_URL,
