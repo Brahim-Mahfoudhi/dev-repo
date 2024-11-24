@@ -15,12 +15,15 @@ pipeline {
         JENKINS_CREDENTIALS_ID = "jenkins-master-key"
         SSH_KEY_FILE = '/var/lib/jenkins/.ssh/id_rsa'
         REMOTE_HOST = 'jenkins@172.16.128.101' // NEEDS TO BE CHANGED
-        COVERAGE_REPORT_PATH = '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml'
-        COVERAGE_REPORT_DIR = '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/'
         TRX_FILE_PATH = 'Rise.Domain.Tests/TestResults/test-results.trx'
         TEST_RESULT_PATH = 'Rise.Domain.Tests/TestResults'
         TRX_TO_XML_PATH = 'Rise.Domain.Tests/TestResults/test-results.xml'
         PUBLISH_DIR_PATH = '/var/lib/jenkins/artifacts/'
+        M2MCLIENTID = credentials('M2MClientId') 
+        M2MCLIENTSECRET = credentials('M2MClientSecret')
+        BLAZORCLIENTID = credentials('BlazorClientId')
+        BLAZORCLIENTSECRET = credentials('BlazorClientSecret')
+        SQL_CONNECTION_STRING = credentials('SQLConnectionString')
     }
 
      stages {
@@ -115,18 +118,27 @@ pipeline {
             }
         }
 
-        stage('Deploy to Remote Server') {
-            steps {
-                sshagent([JENKINS_CREDENTIALS_ID]) {
-                    script {
-                        sh """
-                            scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
-                        """
-                    }
-                }
+       stage('Deploy to Remote Server') {
+        steps {
+            sshagent([JENKINS_CREDENTIALS_ID]) {
+                sh """
+                    scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
+                    ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST} "
+                      for file in ${PUBLISH_DIR_PATH}/appsettings.json ${PUBLISH_DIR_PATH}/appsettings.Development.json; do
+                        sed -i '
+                          s|<M2MClientId>|${M2MCLIENTID}|g;
+                          s|<M2MClientSecret>|${M2MCLIENTSECRET}|g;
+                          s|<BlazorClientId>|${BLAZORCLIENTID}|g;
+                          s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
+                          s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
+                        ' \$file
+                      done
+                    "
+                """
             }
         }
     }
+}
 
     post {
         success {
