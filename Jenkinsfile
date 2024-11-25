@@ -144,13 +144,12 @@ pipeline {
                                                 export BLAZORCLIENTSECRET=\${BLAZORCLIENTSECRET} && \
                                                 export SQL_CONNECTION_STRING=\${SQL_CONNECTION_STRING} && \
                                                 sed -i "
-                                                    s|<M2MClientId>|\$M2MCLIENTID|g;
-                                                    s|<M2MClientSecret>|\$M2MCLIENTSECRET|g;
-                                                    s|<BlazorClientId>|\$BLAZORCLIENTID|g;
-                                                    s|<BlazorClientSecret>|\$BLAZORCLIENTSECRET|g;
-                                                    s|<SQLConnectionString>|\$SQL_CONNECTION_STRING|g
+                                                    s|\"ConnectionStrings\": \{\}|\"ConnectionStrings\": \{\"DefaultConnection\": \"\$SQL_CONNECTION_STRING\"\}|;
+                                                    s|\"Auth0\": \{\}|\"Auth0\": \{\"ClientId\": \"\$M2MCLIENTID\", \"ClientSecret\": \"\$M2MCLIENTSECRET\", \
+                                                    \"BlazorClientId\": \"\$BLAZORCLIENTID\", \"BlazorClientSecret\": \"\$BLAZORCLIENTSECRET\"\}\}|
                                                 " ${PUBLISH_FILES}'
                             """
+
                         }
                     }
                 }
