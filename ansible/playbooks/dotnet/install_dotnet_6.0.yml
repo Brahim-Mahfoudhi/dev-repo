@@ -1,0 +1,102 @@
+- name: Clean install of .NET SDK 8.0
+  hosts: app
+  become: yes
+  tasks:
+    - name: Remove all existing .NET, ASP.NET Core, and netstandard packages
+      apt:
+        name: "dotnet*, aspnetcore*, netstandard*"
+        state: absent
+        autoremove: yes
+
+    - name: Create preferences file for Microsoft packages
+      copy:
+        dest: /etc/apt/preferences.d/99microsoft-dotnet.pref
+        content: |
+          Package: dotnet* aspnet* netstandard*
+          Pin: origin "archive.ubuntu.com"
+          Pin-Priority: -10
+
+          Package: dotnet* aspnet* netstandard*
+          Pin: origin "security.ubuntu.com"
+          Pin-Priority: -10
+        mode: "0644"
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Download MS product repository
+      get_url:
+        url: https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+        dest: /tmp/packages-microsoft-prod.deb
+
+    - name: Install MS product repository
+      apt:
+        deb: /tmp/packages-microsoft-prod.deb
+
+    - name: Make sure HTTPS is supported by apt
+      apt:
+        name: apt-transport-https
+        state: present
+        update_cache: yes
+
+    - name: Update APT package index
+      apt:
+        update_cache: yes
+
+    - name: Install .NET SDK 8.0 and dependencies
+      apt:
+        name:
+          - dotnet-sdk-6.0
+          - libssl3
+          - libicu70
+        state: present
+
+    - name: Remove the MS product repository package
+      file:
+        path: /tmp/packages-microsoft-prod.deb
+        state: absent
+
+    - name: Install Git
+      apt:
+        name: git
+        state: present
+
+    - name: Update APT package cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all APT packages
+      apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+
+    - name: Install Ubuntu Desktop
+      apt:
+        name: ubuntu-desktop
+        state: present
+
+    - name: Install additional useful packages (optional)
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - gdm3
+        - gnome-terminal
+        - network-manager
+        - xrdp
+
+    - name: Enable graphical target (GUI on boot)
+      systemd:
+        name: graphical.target
+        enabled: yes
+        state: started
+
+    - name: Ensure /vagrant/app exists with correct ownership
+      file:
+        path: /vagrant/app
+        state: directory
+        owner: vagrant
+        group: vagrant
+        mode: "0755"

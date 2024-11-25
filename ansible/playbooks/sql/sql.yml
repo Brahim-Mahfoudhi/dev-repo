@@ -1,0 +1,79 @@
+- name: Install SQL Server using Docker and configure .NET connection string
+  hosts: app
+  become: yes
+  vars:
+    sa_password: "sql-rise-1234"
+    sql_server_image: "mcr.microsoft.com/mssql/server:2022-latest"
+    sql_container_name: "sqlserver"
+    database_name: "SportStore"
+    connection_development_string_file: "/vagrant/app/src/Server/appsettings.Development.json"
+    connection_string_file: "/vagrant/app/src/Server/appsettings.json"
+  tasks:
+    - name: Clone p3ops-demo-app repository
+      git:
+        repo: https://github.com/HoGentTIN/p3ops-demo-app.git
+        dest: /vagrant/app
+        update: yes
+        force: yes
+      become: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker is running
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull SQL Server Docker image
+      docker_image:
+        name: "{{ sql_server_image }}"
+        source: pull
+
+    - name: Run SQL Server container
+      docker_container:
+        name: "{{ sql_container_name }}"
+        image: "{{ sql_server_image }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "1433:1433"
+        env:
+          ACCEPT_EULA: "Y"
+          SA_PASSWORD: "{{ sa_password }}"
+
+    - name: Wait for SQL Server to initialize
+      wait_for:
+        host: localhost
+        port: 1433
+        delay: 60
+        state: started
+        timeout: 300 
+
+    - name: Install unixodbc-dev in SQL Server container
+      command: docker exec -u 0 -i {{ sql_container_name }} /bin/bash -c "apt-get update && apt-get install -y unixodbc-dev"
+
+    - name: Install mssql-tools in SQL Server container
+      command: docker exec -u 0 -i {{ sql_container_name }} /bin/bash -c "apt-get update && apt-get install -y mssql-tools"
+
+    - name: Create SportStore database
+      command: |
+        docker exec -u 0 -i {{ sql_container_name }} /opt/mssql-tools/bin/sqlcmd \
+        -S localhost -U sa -P "{{ sa_password }}" \
+        -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '{{ database_name }}') CREATE DATABASE [{{ database_name }}];"
+
+    - name: Update .NET connection appsettings.Development.json string
+      lineinfile:
+        path: "{{ connection_development_string_file }}"
+        regexp: '"SqlDatabase": ".*"'
+        line: '"SqlDatabase": "Server=localhost,1433;Database={{ database_name }};User Id=sa;Password={{ sa_password }};Trusted_Connection=False;MultipleActiveResultSets=True;"'
+
+    - name: Update .NET connection appsettings.json string
+      lineinfile:
+        path: "{{ connection_string_file }}"
+        regexp: '"SqlDatabase": ".*"'
+        line: '"SqlDatabase": "Server=localhost,1433;Database={{ database_name }};User Id=sa;Password={{ sa_password }};Trusted_Connection=False;MultipleActiveResultSets=True;"'

@@ -1,0 +1,41 @@
+- name: Run in production
+  hosts: dockerlab
+  become: yes
+  vars:
+    sa_password: "Drgnnrblnc19"
+    database_name: "SportStore"
+  tasks:
+    - name: Restore the packages
+      command: dotnet restore src/Server/Server.csproj
+      args:
+        chdir: /vagrant/app
+
+    - name: Build the server
+      command: dotnet build src/Server/Server.csproj
+      args:
+        chdir: /vagrant/app
+
+    - name: Publish server
+      command: dotnet publish src/Server/Server.csproj -c Release -o publish
+      args:
+        chdir: /vagrant/app
+
+    - name: Set DOTNET_ENVIRONMENT variable
+      lineinfile:
+        path: /etc/environment
+        line: 'DOTNET_ENVIRONMENT=Production'
+        state: present
+
+    - name: Set DOTNET_ConnectionStrings__SqlDatabase variable
+      lineinfile:
+        path: /etc/environment
+        line: 'DOTNET_ConnectionStrings__SqlDatabase="Server=localhost,1433;Database={{ database_name }};User Id=sa;Password={{ sa_password }};"'
+        state: present
+
+    - name: Run application
+      command: dotnet publish/Server.dll
+      args:
+        chdir: /vagrant/app/publish
+      environment:
+        DOTNET_ENVIRONMENT: "Production"
+        DOTNET_ConnectionStrings__SqlDatabase: "Server=localhost,1433;Database={{ database_name }};User Id=sa;Password={{ sa_password }};"

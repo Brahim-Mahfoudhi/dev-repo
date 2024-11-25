@@ -1,0 +1,23 @@
+---
+
+# SSH
+- import_playbook: playbooks/ssh/initialize_known_hosts.yml
+
+# .Net 8.0
+- import_playbook: playbooks/dotnet/install_dotnet.yml
+
+# nginx
+- import_playbook: playbooks/nginx/nginx.yml
+
+# cert
+# - import_playbook: playbooks/certificate/generate_certificate.yml
+
+# sql
+- import_playbook: playbooks/sql/sql.yml
+
+
+
+
+
+
+

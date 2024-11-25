@@ -1,0 +1,12 @@
+---
+servers:
+  vars:
+    ansible_user: vagrant
+    ansible_ssh_pass: vagrant
+    ansible_become: true
+  hosts:
+    dockerlab:
+      ansible_host: 172.16.128.101
+
+
+

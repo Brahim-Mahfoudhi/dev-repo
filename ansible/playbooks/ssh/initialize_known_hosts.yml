@@ -1,0 +1,62 @@
+- name: Create known_hosts on localhost
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    ssh_path: "~/.ssh"
+    known_hosts: "~/.ssh/known_hosts"
+  tasks:
+    - name: Create SSH directory if it doesn't exist
+      file:
+        path: "{{ ssh_path }}"
+        state: directory
+
+    - name: ansible stat to verify known_hosts exists
+      ansible.builtin.stat:
+        path: "{{known_hosts}}"
+      register: ansible_stat_known_hosts
+
+    - name: Create known_hosts file if it does not exists
+      file:
+        path: "{{ known_hosts }}"
+        state: touch
+      when: not ansible_stat_known_hosts.stat.exists
+
+- name: install community.crypto
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Check if community.crypto collection is installed
+      ansible.builtin.stat:
+        path: "/home/vagrant/.local/lib/python3.9/site-packages/ansible_collections/community"
+      register: crypto_collection_installed
+
+    - name: Install community.cr collection
+      command: ansible-galaxy collection install community.crypto
+      when: not crypto_collection_installed.stat.exists
+
+#------------------------------------------------------------------------------------------------
+- name: Get the SSH fingerprint from the managed nodes
+  hosts: app
+  become: yes
+  gather_facts: no
+  connection: local
+  vars:
+    known_hosts: "/home/vagrant/.ssh/known_hosts"
+  tasks:
+    - name: ansible stat to verify known_hosts exists
+      ansible.builtin.stat:
+        path: "{{known_hosts}}"
+      register: ansible_stat_known_hosts
+
+    - name: Scan and register
+      command: "ssh-keyscan {{ ansible_host }}"
+      register: host_keys
+      become: yes
+
+    - name: Add SSH keys to known_hosts
+      lineinfile:
+        path: "{{ known_hosts }}"
+        line: "{{ item }}"
+      with_items: "{{ host_keys.stdout_lines }}"
+      become: yes

@@ -1,0 +1,131 @@
+- name: Configure Nginx with SSL (Self-Signed)
+  hosts: app
+  become: yes
+  vars:
+    domain: acc.buut.tiao1.be
+    webroot_path: /var/www/{{ domain }}
+    ssl_cert_dir: /etc/nginx/ssl
+    ssl_cert_file: "{{ ssl_cert_dir }}/{{ domain }}.crt"
+    ssl_key_file: "{{ ssl_cert_dir }}/{{ domain }}.key"
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - nginx
+          - openssl
+        state: present
+        update_cache: yes
+
+    - name: Create webroot directory
+      file:
+        path: "{{ webroot_path }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Ensure Nginx configuration file exists
+      file:
+        path: /etc/nginx/sites-available/{{ domain }}
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Configure Nginx for HTTP traffic (port 80)
+      blockinfile:
+        path: /etc/nginx/sites-available/{{ domain }}
+        block: |
+          server {
+              listen 80;
+              server_name {{ domain }};
+              
+              location /.well-known/acme-challenge/ {
+                  root {{ webroot_path }};
+              }
+
+              # Redirect HTTP to HTTPS
+              location / {
+                  return 301 https://$host$request_uri;
+              }
+          }
+      notify: Reload Nginx
+
+    - name: Enable Nginx site configuration
+      file:
+        src: /etc/nginx/sites-available/{{ domain }}
+        dest: /etc/nginx/sites-enabled/{{ domain }}
+        state: link
+
+    - name: Create SSL directory
+      file:
+        path: "{{ ssl_cert_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Check if SSL certificate already exists
+      stat:
+        path: "{{ ssl_cert_file }}"
+      register: cert_stat
+
+    - name: Generate self-signed SSL certificate
+      shell: >
+        openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
+        -keyout /etc/nginx/ssl/acc.buut.tiao1.be.key \
+        -out /etc/nginx/ssl/acc.buut.tiao1.be.crt \
+        -subj "/C=BE/ST=Oost-Vlaanderen/L=Gent/O=HOGENT/CN=acc.buut.tiao1.be" \
+        -sha256 \
+        -addext "subjectAltName = DNS:acc.buut.tiao1.be"
+      when: not cert_stat.stat.exists
+
+    - name: Set permissions on SSL key
+      file:
+        path: "{{ ssl_key_file }}"
+        owner: root
+        group: root
+        mode: '0600'
+      when: not cert_stat.stat.exists
+    
+    - name: Add acc.buut.tiao1.be entries to /etc/hosts
+      become: yes
+      blockinfile:
+        path: /etc/hosts
+        block: |
+          127.0.0.1       acc.buut.tiao1.be
+          139.162.133.163 acc.buut.tiao1.be
+
+    - name: Test Nginx configuration
+      command: nginx -t
+
+    - name: Configure Nginx to use self-signed SSL certificate (for HTTPS on port 443)
+      blockinfile:
+        path: /etc/nginx/sites-available/{{ domain }}
+        marker: "# {mark} Self-Signed SSL"
+        block: |
+          server {
+              listen 443 ssl;
+              server_name {{ domain }};
+
+              ssl_certificate {{ ssl_cert_file }};
+              ssl_certificate_key {{ ssl_key_file }};
+              ssl_protocols TLSv1.2 TLSv1.3;
+              ssl_ciphers 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384';
+
+              location / {
+                  proxy_pass https://acc.buut.tiao1.be:5001;  # Proxy to backend using HTTPS
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+      notify: Reload Nginx
+
+  handlers:
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
