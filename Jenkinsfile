@@ -129,8 +129,8 @@ pipeline {
                 ]) {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         sh """
-                            # Variables for remote access
                             REMOTE_CMD="ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"
+                            PUBLISH_DIR_PATH="/var/lib/jenkins/artifacts"
                             PUBLISH_FILES="${PUBLISH_DIR_PATH}/appsettings.json ${PUBLISH_DIR_PATH}/appsettings.Development.json"
         
                             # Transfer files to the remote server
