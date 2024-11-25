@@ -129,12 +129,16 @@ pipeline {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         script {
                             def PUBLISH_FILES = "/var/lib/jenkins/artifacts/appsettings.json /var/lib/jenkins/artifacts/appsettings.Development.json"
-                            def REMOTE_CMD = "ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"                           
+                            def REMOTE_CMD = "ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"
+        
+                            // SCP files to remote server
                             sh """
                                 scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
-                                
-                                # Modify configuration files on the remote server
-                                ${REMOTE_CMD} <<EOF
+                            """
+        
+                            // Modify configuration files on the remote server
+                            sh """
+                                ${REMOTE_CMD} <<'EOF'
                                     sed -i '
                                         s|<M2MClientId>|${M2MCLIENTID}|g;
                                         s|<M2MClientSecret>|${M2MCLIENTSECRET}|g;
@@ -142,7 +146,7 @@ pipeline {
                                         s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
                                         s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
                                     ' ${PUBLISH_FILES}
-                            EOF
+                                EOF
                             """
                         }
                     }
