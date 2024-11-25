@@ -119,7 +119,7 @@ pipeline {
         }
 
         stage('Deploy to Remote Server') {
-            steps { 
+            steps {
                 withCredentials([
                     string(credentialsId: 'M2MClientId', variable: 'M2MCLIENTID'),
                     string(credentialsId: 'M2MClientSecret', variable: 'M2MCLIENTSECRET'),
@@ -128,36 +128,37 @@ pipeline {
                     string(credentialsId: 'SQLConnectionString', variable: 'SQL_CONNECTION_STRING')
                 ]) {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
-                        sh """
-                            REMOTE_CMD="ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"
-                            PUBLISH_DIR_PATH="/var/lib/jenkins/artifacts"
-                            PUBLISH_FILES="${PUBLISH_DIR_PATH}/appsettings.json ${PUBLISH_DIR_PATH}/appsettings.Development.json"
+                        script {
+                            def PUBLISH_FILES = "/var/lib/jenkins/artifacts/appsettings.json /var/lib/jenkins/artifacts/appsettings.Development.json"
+                            def REMOTE_CMD = "ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"
+                            def PUBLISH_DIR_PATH = "/var/lib/jenkins/artifacts"
         
-                            # Transfer files to the remote server
-                            scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
+                            sh """
+                                scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
         
-                            # Modify configuration files on the remote server
-                            \$REMOTE_CMD "
-                              for file in ${PUBLISH_FILES}; do
-                                if [ -f \"\$file\" ]; then
-                                  echo \"Updating placeholders in \$file\"
-                                  sed -i '
-                                    s|<M2MClientId>|${M2MCLIENTID}|g;
-                                    s|<M2MClientSecret>|${M2MCLIENTSECRET}|g;
-                                    s|<BlazorClientId>|${BLAZORCLIENTID}|g;
-                                    s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
-                                    s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
-                                  ' \"\$file\"
-                                else
-                                  echo \"File \$file does not exist, skipping...\"
-                                fi
-                              done
-                            "
-                        """
+                                # Modify configuration files on the remote server
+                                \$REMOTE_CMD "
+                                  for file in ${PUBLISH_FILES}; do
+                                    if [ -f \"\$file\" ]; then
+                                      echo \"Updating placeholders in \$file\"
+                                      sed -i '
+                                        s|<M2MClientId>|${M2MCLIENTID}|g;
+                                        s|<M2MClientSecret>|${M2MCLIENTSECRET}|g;
+                                        s|<BlazorClientId>|${BLAZORCLIENTID}|g;
+                                        s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
+                                        s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
+                                      ' \"\$file\"
+                                    else
+                                      echo \"File \$file does not exist, skipping...\"
+                                    fi
+                                  done
+                                "
+                            """
+                        }
                     }
                 }
-          }
-    }
+            }
+        }
 }
 
     post {
