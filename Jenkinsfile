@@ -130,7 +130,7 @@ pipeline {
                         script {
                             def PUBLISH_FILES = "/var/lib/jenkins/artifacts/appsettings.json /var/lib/jenkins/artifacts/appsettings.Development.json"
                             def REMOTE_CMD = "ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"
-        
+            
                             // Copy the files
                             sh """
                                 scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
@@ -144,12 +144,11 @@ pipeline {
                                                 export BLAZORCLIENTSECRET=\${BLAZORCLIENTSECRET} && \
                                                 export SQL_CONNECTION_STRING=\${SQL_CONNECTION_STRING} && \
                                                 sed -i "
-                                                    s|\"ConnectionStrings\": \{\}|\"ConnectionStrings\": \{\"DefaultConnection\": \"\$SQL_CONNECTION_STRING\"\}|;
+                                                    s|\"ConnectionStrings\": \{\}|\"ConnectionStrings\": \{\"DefaultConnection\": \"\$SQL_CONNECTION_STRING\"\}|g;
                                                     s|\"Auth0\": \{\}|\"Auth0\": \{\"ClientId\": \"\$M2MCLIENTID\", \"ClientSecret\": \"\$M2MCLIENTSECRET\", \
-                                                    \"BlazorClientId\": \"\$BLAZORCLIENTID\", \"BlazorClientSecret\": \"\$BLAZORCLIENTSECRET\"\}\}|
+                                                    \"BlazorClientId\": \"\$BLAZORCLIENTID\", \"BlazorClientSecret\": \"\$BLAZORCLIENTSECRET\"\}\}|g
                                                 " ${PUBLISH_FILES}'
                             """
-
                         }
                     }
                 }
