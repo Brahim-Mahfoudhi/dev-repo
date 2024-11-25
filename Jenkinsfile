@@ -125,7 +125,6 @@ pipeline {
                     string(credentialsId: 'BlazorClientId', variable: 'BLAZORCLIENTID'),
                     string(credentialsId: 'BlazorClientSecret', variable: 'BLAZORCLIENTSECRET'),
                     string(credentialsId: 'SQLConnectionString', variable: 'SQL_CONNECTION_STRING'),
-                    file(credentialsId: 'SSHPrivateKey', variable: 'SSH_KEY_FILE')  // Ensure SSH key is passed in
                 ]) {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         script {
