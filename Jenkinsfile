@@ -132,11 +132,11 @@ pipeline {
                             def REMOTE_CMD = "ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"
                             def PUBLISH_DIR_PATH = "/var/lib/jenkins/artifacts"
         
-                            sh '''
+                            sh """
                                 scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
                                 
                                 # Modify configuration files on the remote server
-                                \$REMOTE_CMD "
+                                ${REMOTE_CMD} "
                                     for file in ${PUBLISH_FILES}; do
                                         sed -i '
                                             s|<M2MClientId>|${M2MCLIENTID}|g;
@@ -144,10 +144,10 @@ pipeline {
                                             s|<BlazorClientId>|${BLAZORCLIENTID}|g;
                                             s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
                                             s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
-                                        ' \$file
+                                        ' \\"$file\\"
                                     done
                                 "
-                            '''
+                            """
                         }
                     }
                 }
