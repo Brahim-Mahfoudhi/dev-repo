@@ -139,7 +139,6 @@ pipeline {
                                 # Modify configuration files on the remote server
                                 \$REMOTE_CMD "
                                   for file in ${PUBLISH_FILES}; do
-                                    if [ -f \\"\$file\\" ]; then
                                       echo \"Updating placeholders in \$file\"
                                       sed -i '
                                         s|<M2MClientId>|${M2MCLIENTID}|g;
@@ -148,9 +147,7 @@ pipeline {
                                         s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
                                         s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
                                       ' \"\$file\"
-                                    else
-                                      echo \"File \$file does not exist, skipping...\"
-                                    fi
+                                   fi
                                   done
                                 "
                             """
