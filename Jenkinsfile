@@ -139,7 +139,7 @@ pipeline {
                                 # Modify configuration files on the remote server
                                 \$REMOTE_CMD "
                                   for file in ${PUBLISH_FILES}; do
-                                    if [ -f \"\$file\" ]; then
+                                    if [ -f $file ]; then
                                       echo \"Updating placeholders in \$file\"
                                       sed -i '
                                         s|<M2MClientId>|${M2MCLIENTID}|g;
