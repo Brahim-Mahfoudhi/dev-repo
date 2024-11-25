@@ -120,7 +120,7 @@ pipeline {
 
         stage('Deploy to Remote Server') {
             steps {
-                withCredentials([
+                withCredentials([ 
                     string(credentialsId: 'M2MClientId', variable: 'M2MCLIENTID'),
                     string(credentialsId: 'M2MClientSecret', variable: 'M2MCLIENTSECRET'),
                     string(credentialsId: 'BlazorClientId', variable: 'BLAZORCLIENTID'),
@@ -133,31 +133,29 @@ pipeline {
                             def REMOTE_CMD = "ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"
                             def PUBLISH_DIR_PATH = "/var/lib/jenkins/artifacts"
         
-                            sh """
+                            sh '''
                                 scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
-        
+                                
                                 # Modify configuration files on the remote server
                                 \$REMOTE_CMD "
-                                  for file in ${PUBLISH_FILES}; do
-                                      echo \"Updating placeholders in \$file\"
-                                      sed -i '
-                                        s|<M2MClientId>|${M2MCLIENTID}|g;
-                                        s|<M2MClientSecret>|${M2MCLIENTSECRET}|g;
-                                        s|<BlazorClientId>|${BLAZORCLIENTID}|g;
-                                        s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
-                                        s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
-                                      ' \"\$file\"
-                                   fi
-                                  done
+                                    for file in ${PUBLISH_FILES}; do
+                                        sed -i '
+                                            s|<M2MClientId>|${M2MCLIENTID}|g;
+                                            s|<M2MClientSecret>|${M2MCLIENTSECRET}|g;
+                                            s|<BlazorClientId>|${BLAZORCLIENTID}|g;
+                                            s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
+                                            s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
+                                        ' \$file
+                                    done
                                 "
-                            """
+                            '''
                         }
                     }
                 }
             }
         }
-}
-
+    }
+    
     post {
         success {
             echo 'Build and deployment completed successfully!'
