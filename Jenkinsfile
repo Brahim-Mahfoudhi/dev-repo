@@ -129,19 +129,26 @@ pipeline {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         def PUBLISH_FILES = "/var/lib/jenkins/artifacts/appsettings.json /var/lib/jenkins/artifacts/appsettings.Development.json"
                         def REMOTE_CMD = "ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST}"
-                        
+        
+                        // Copy the files
                         sh """
                             scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
                         """
                         
+                        // SSH and modify files
                         sh """
-                            ${REMOTE_CMD} 'export M2MCLIENTID=\${M2MCLIENTID} && export M2MCLIENTSECRET=\${M2MCLIENTSECRET} && export BLAZORCLIENTID=\${BLAZORCLIENTID} && export BLAZORCLIENTSECRET=\${BLAZORCLIENTSECRET} && export SQL_CONNECTION_STRING=\${SQL_CONNECTION_STRING} && sed -i "
-                                s|<M2MClientId>|\$M2MCLIENTID|g;
-                                s|<M2MClientSecret>|\$M2MCLIENTSECRET|g;
-                                s|<BlazorClientId>|\$BLAZORCLIENTID|g;
-                                s|<BlazorClientSecret>|\$BLAZORCLIENTSECRET|g;
-                                s|<SQLConnectionString>|\$SQL_CONNECTION_STRING|g
-                            " ${PUBLISH_FILES}'
+                            ${REMOTE_CMD} 'export M2MCLIENTID=\${M2MCLIENTID} && \
+                                            export M2MCLIENTSECRET=\${M2MCLIENTSECRET} && \
+                                            export BLAZORCLIENTID=\${BLAZORCLIENTID} && \
+                                            export BLAZORCLIENTSECRET=\${BLAZORCLIENTSECRET} && \
+                                            export SQL_CONNECTION_STRING=\${SQL_CONNECTION_STRING} && \
+                                            sed -i "
+                                                s|<M2MClientId>|\$M2MCLIENTID|g;
+                                                s|<M2MClientSecret>|\$M2MCLIENTSECRET|g;
+                                                s|<BlazorClientId>|\$BLAZORCLIENTID|g;
+                                                s|<BlazorClientSecret>|\$BLAZORCLIENTSECRET|g;
+                                                s|<SQLConnectionString>|\$SQL_CONNECTION_STRING|g
+                                            " ${PUBLISH_FILES}'
                         """
                     }
                 }
