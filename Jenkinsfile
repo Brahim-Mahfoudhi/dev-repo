@@ -151,7 +151,7 @@ pipeline {
         
                                 # Modify appsettings.Development.json
                                 sed -i 's|\\"ConnectionStrings\\": \\{\\}|\\"ConnectionStrings\\": \\{\\"SqlServer\\": \\"Server=\\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\"\\}|g;' /var/lib/jenkins/artifacts/appsettings.Development.json
-                                sed -i 's|\\"Logging\\": \\{\\}|\\"Logging\\": \\{\\"LogLevel\\": \\{\\"Default\\": \\"Information\\", \\"Microsoft.AspNetCore\\": \\"Warning\\"\\}\}\}|g;' /var/lib/jenkins/artifacts/appsettings.Development.json
+                                sed -i 's|\\"Logging\\": \\{\\}|\\"Logging\\": \\{\\"LogLevel\\": \\{\\"Default\\": \\"Information\\", \\"Microsoft.AspNetCore\\": \\"Warning\\"\\}\\}\\}|g;' /var/lib/jenkins/artifacts/appsettings.Development.json
                             """
         
                             // SSH and execute the commands remotely
