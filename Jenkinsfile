@@ -119,19 +119,30 @@ pipeline {
         }
 
        stage('Deploy to Remote Server') {
-        steps {
+        steps { 
+            withCredentials([
+                string(credentialsId: 'M2MCLIENTID', variable: 'M2MCLIENTID'),
+                string(credentialsId: 'M2MCLIENTSECRET', variable: 'M2MCLIENTSECRET'),
+                string(credentialsId: 'BLAZORCLIENTID', variable: 'BLAZORCLIENTID'),
+                string(credentialsId: 'BLAZORCLIENTSECRET', variable: 'BLAZORCLIENTSECRET'),
+                string(credentialsId: 'SQL_CONNECTION_STRING', variable: 'SQL_CONNECTION_STRING')
+        ]) 
             sshagent([JENKINS_CREDENTIALS_ID]) {
                 sh """
                     scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
                     ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST} "
                       for file in ${PUBLISH_DIR_PATH}/appsettings.json ${PUBLISH_DIR_PATH}/appsettings.Development.json; do
-                        sed -i '
-                          s|<M2MClientId>|${M2MCLIENTID}|g;
-                          s|<M2MClientSecret>|${M2MCLIENTSECRET}|g;
-                          s|<BlazorClientId>|${BLAZORCLIENTID}|g;
-                          s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
-                          s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
-                        ' \$file
+                        if [ -f \"\$file\" ]; then
+                          sed -i '
+                            s|<M2MClientId>|${M2MCLIENTID}|g;
+                            s|<M2MClientSecret>|${M2MCLIENTSECRET}|g;
+                            s|<BlazorClientId>|${BLAZORCLIENTID}|g;
+                            s|<BlazorClientSecret>|${BLAZORCLIENTSECRET}|g;
+                            s|<SQLConnectionString>|${SQL_CONNECTION_STRING}|g
+                          ' \$file
+                        else
+                          echo \"File \$file does not exist\"
+                        fi
                       done
                     "
                 """
