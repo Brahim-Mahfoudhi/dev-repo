@@ -143,17 +143,18 @@ pipeline {
                                                 export BLAZORCLIENTID=\${BLAZORCLIENTID} && \
                                                 export BLAZORCLIENTSECRET=\${BLAZORCLIENTSECRET} && \
                                                 export SQL_CONNECTION_STRING=\${SQL_CONNECTION_STRING} && \
-                                                sed -i "
-                                                    s|\\"ConnectionStrings\\": \{\}|\\\"ConnectionStrings\\": \\{\"DefaultConnection\\\": \\"\\${SQL_CONNECTION_STRING}\\\"\\}|g;
-                                                    s|\\"Auth0\\": \{\}|\\\"Auth0\\\": \\{\"ClientId\\\": \\"\\${M2MCLIENTID}\\\", \\\"ClientSecret\\\": \\"\\${M2MCLIENTSECRET}\\\", \\
-                                                    \\\"BlazorClientId\\\": \\"\\${BLAZORCLIENTID}\\\", \\\"BlazorClientSecret\\\": \\"\\${BLAZORCLIENTSECRET}\\\"\}\\}|g
-                                                " ${PUBLISH_FILES}'
+                                                sed -i '
+                                                    s|\"ConnectionStrings\": \{\}|\"ConnectionStrings\": \{\"DefaultConnection\": \"\${SQL_CONNECTION_STRING}\"\}|g;
+                                                    s|\"Auth0\": \{\}|\"Auth0\": \{\"ClientId\": \"\${M2MCLIENTID}\", \"ClientSecret\": \"\${M2MCLIENTSECRET}\", \
+                                                    \"BlazorClientId\": \"\${BLAZORCLIENTID}\", \"BlazorClientSecret\": \"\${BLAZORCLIENTSECRET}\"\}\}|g
+                                                ' ${PUBLISH_FILES}'
                             """
                         }
                     }
                 }
             }
-        }
+    }
+
     }
     
     post {
