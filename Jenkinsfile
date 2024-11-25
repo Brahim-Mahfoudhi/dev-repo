@@ -134,13 +134,13 @@ pipeline {
                                 scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
                             """
                             sh """
-                                ${REMOTE_CMD} 'sed -i '
+                                ${REMOTE_CMD} "sed -i '
                                     s|<M2MClientId>|\$M2MCLIENTID|g;
                                     s|<M2MClientSecret>|\$M2MCLIENTSECRET|g;
                                     s|<BlazorClientId>|\$BLAZORCLIENTID|g;
                                     s|<BlazorClientSecret>|\$BLAZORCLIENTSECRET|g;
                                     s|<SQLConnectionString>|\$SQL_CONNECTION_STRING|g
-                                ' ${PUBLISH_FILES}
+                                ' ${PUBLISH_FILES}"
                             """
                         }
                     }
