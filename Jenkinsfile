@@ -117,14 +117,14 @@ pipeline {
             }
         }
 
-       stage('Deploy to Remote Server') {
+        stage('Deploy to Remote Server') {
             steps {
                 withCredentials([ 
                     string(credentialsId: 'M2MClientId', variable: 'M2MCLIENTID'),
                     string(credentialsId: 'M2MClientSecret', variable: 'M2MCLIENTSECRET'),
                     string(credentialsId: 'BlazorClientId', variable: 'BLAZORCLIENTID'),
                     string(credentialsId: 'BlazorClientSecret', variable: 'BLAZORCLIENTSECRET'),
-                    string(credentialsId: 'SQLConnectionString', variable: 'SQL_CONNECTION_STRING'),
+                    string(credentialsId: 'SQLConnectionString', variable: 'SQL_CONNECTION_STRING')
                 ]) {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         script {
@@ -136,8 +136,9 @@ pipeline {
                                 scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
                             """
         
-                            // Set environment variables and modify files remotely
+                            // Define the remote command to set environment variables and modify files
                             def setEnvAndModifyFiles = """
+                                # Set environment variables (without direct interpolation of secrets in Groovy)
                                 export M2MCLIENTID=\${M2MCLIENTID}
                                 export M2MCLIENTSECRET=\${M2MCLIENTSECRET}
                                 export BLAZORCLIENTID=\${BLAZORCLIENTID}
@@ -145,15 +146,15 @@ pipeline {
                                 export SQL_CONNECTION_STRING=\${SQL_CONNECTION_STRING}
         
                                 # Modify appsettings.json
-                                sed -i 's|\\"ConnectionStrings\\": \\{\\}|\\"ConnectionStrings\\": \\{\\"SqlServer\\": \\"Server=\\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\"\\}|g;' /var/lib/jenkins/artifacts/appsettings.json
-                                sed -i 's|\\"Auth0\\": \\{\\}|\\"Auth0\\": \\{\\"Authority\\": \\"https://dev-6yunsksn11owe71c.us.auth0.com/\\", \\"Audience\\": \\"https://api.rise.buut.com/\\", \\"M2MClientId\\": \\"\\${M2MCLIENTID}\\", \\"M2MClientSecret\\": \\"\\${M2MCLIENTSECRET}\\", \\"BlazorClientId\\": \\"\\${BLAZORCLIENTID}\\", \\"BlazorClientSecret\\": \\"\\${BLAZORCLIENTSECRET}\\\"\\}\\}|g;' /var/lib/jenkins/artifacts/appsettings.json
+                                sed -i 's|"ConnectionStrings": {}|"ConnectionStrings": {"SqlServer": "Server=\${SQL_CONNECTION_STRING};TrustServerCertificate=True;"}|g' ${PUBLISH_FILES}
+                                sed -i 's|"Auth0": {}|"Auth0": {"Authority": "https://dev-6yunsksn11owe71c.us.auth0.com/", "Audience": "https://api.rise.buut.com/", "M2MClientId": "\${M2MCLIENTID}", "M2MClientSecret": "\${M2MCLIENTSECRET}", "BlazorClientId": "\${BLAZORCLIENTID}", "BlazorClientSecret": "\${BLAZORCLIENTSECRET}"}|g' ${PUBLISH_FILES}
         
                                 # Modify appsettings.Development.json
-                                sed -i 's|\\"ConnectionStrings\\": \\{\\}|\\"ConnectionStrings\\": \\{\\"SqlServer\\": \\"Server=\\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\"\\}|g;' /var/lib/jenkins/artifacts/appsettings.Development.json
-                                sed -i 's|\\"Logging\\": \\{\\}|\\"Logging\\": \\{\\"LogLevel\\": \\{\\"Default\\": \\"Information\\", \\"Microsoft.AspNetCore\\": \\"Warning\\"\\}\\}\\}|g;' /var/lib/jenkins/artifacts/appsettings.Development.json
+                                sed -i 's|"ConnectionStrings": {}|"ConnectionStrings": {"SqlServer": "Server=\${SQL_CONNECTION_STRING};TrustServerCertificate=True;"}|g' ${PUBLISH_FILES}
+                                sed -i 's|"Logging": {}|"Logging": {"LogLevel": {"Default": "Information", "Microsoft.AspNetCore": "Warning"}}|g' ${PUBLISH_FILES}
                             """
         
-                            // SSH and execute the commands remotely
+                            // Execute the remote command
                             sh """
                                 ${REMOTE_CMD} '${setEnvAndModifyFiles}'
                             """
