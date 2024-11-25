@@ -129,9 +129,7 @@ pipeline {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         script {
                             def remoteScript = "/tmp/deploy_script.sh"
-                            def publishDir = "${PUBLISH_DIR_PATH}"
-                            
-                            // Create a temporary script locally
+                            def publishDir = "${PUBLISH_DIR_PATH}"                            
                             sh """
                                 echo '#!/bin/bash
                                 export M2MCLIENTID="${M2MCLIENTID}"
@@ -141,17 +139,16 @@ pipeline {
                                 export SQL_CONNECTION_STRING="${SQL_CONNECTION_STRING}"
         
                                 sed -i "s|\\\\"ConnectionStrings\\": {}|\\\\"ConnectionStrings\\": {\\\\"SqlServer\\": \\\\"Server=\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\\"}|g" ${publishDir}/appsettings.json
+                                sed -i "s|\\\\"ConnectionStrings\\": {}|\\\\"ConnectionStrings\\": {\\\\"SqlServer\\": \\\\"Server=\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\\"}|g" ${publishDir}/appsettings.Development.json
                                 sed -i "s|\\\\"Auth0\\": {}|\\\\"Auth0\\": {\\\\"Authority\\": \\\\"https://dev-6yunsksn11owe71c.us.auth0.com/\\\\", \\\\"Audience\\": \\\\"https://api.rise.buut.com/\\\\", \\\\"M2MClientId\\": \\\\"\${M2MCLIENTID}\\", \\\\"M2MClientSecret\\": \\\\"\${M2MCLIENTSECRET}\\", \\\\"BlazorClientId\\": \\\\"\${BLAZORCLIENTID}\\", \\\\"BlazorClientSecret\\": \\\\"\${BLAZORCLIENTSECRET}\\\\"}|g" ${publishDir}/appsettings.json
                                 sed -i "s|\\\\"Logging\\": {}|\\\\"Logging\\": {\\\\"LogLevel\\": {\\\\"Default\\": \\\\"Information\\\\", \\\\"Microsoft.AspNetCore\\": \\\\"Warning\\\\"}}|g" ${publishDir}/appsettings.json
                                 ' > ${remoteScript}
                             """
                             
-                            // Copy the script to the remote server
                             sh """
                                 scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${remoteScript} ${REMOTE_HOST}:${remoteScript}
                             """
                             
-                            // Execute the script remotely
                             sh """
                                 ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST} "bash ${remoteScript} && rm ${remoteScript}"
                             """
