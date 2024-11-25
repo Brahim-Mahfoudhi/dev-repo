@@ -19,11 +19,11 @@ pipeline {
         TEST_RESULT_PATH = 'Rise.Domain.Tests/TestResults'
         TRX_TO_XML_PATH = 'Rise.Domain.Tests/TestResults/test-results.xml'
         PUBLISH_DIR_PATH = '/var/lib/jenkins/artifacts/'
-        M2MCLIENTID = credentials('M2MClientId') 
-        M2MCLIENTSECRET = credentials('M2MClientSecret')
-        BLAZORCLIENTID = credentials('BlazorClientId')
-        BLAZORCLIENTSECRET = credentials('BlazorClientSecret')
-        SQL_CONNECTION_STRING = credentials('SQLConnectionString')
+       // M2MCLIENTID = credentials('M2MClientId') 
+       // M2MCLIENTSECRET = credentials('M2MClientSecret')
+       // BLAZORCLIENTID = credentials('BlazorClientId')
+       // BLAZORCLIENTSECRET = credentials('BlazorClientSecret')
+       // SQL_CONNECTION_STRING = credentials('SQLConnectionString')
     }
 
      stages {
@@ -121,11 +121,11 @@ pipeline {
         stage('Deploy to Remote Server') {
             steps { 
                 withCredentials([
-                    string(credentialsId: 'M2MCLIENTID', variable: 'M2MCLIENTID'),
-                    string(credentialsId: 'M2MCLIENTSECRET', variable: 'M2MCLIENTSECRET'),
-                    string(credentialsId: 'BLAZORCLIENTID', variable: 'BLAZORCLIENTID'),
-                    string(credentialsId: 'BLAZORCLIENTSECRET', variable: 'BLAZORCLIENTSECRET'),
-                    string(credentialsId: 'SQL_CONNECTION_STRING', variable: 'SQL_CONNECTION_STRING')
+                    string(credentialsId: 'M2MClientId', variable: 'M2MCLIENTID'),
+                    string(credentialsId: 'M2MClientSecret', variable: 'M2MCLIENTSECRET'),
+                    string(credentialsId: 'BlazorClientId', variable: 'BLAZORCLIENTID'),
+                    string(credentialsId: 'BlazorClientSecret', variable: 'BLAZORCLIENTSECRET'),
+                    string(credentialsId: 'SQLConnectionString', variable: 'SQL_CONNECTION_STRING')
                 ]) {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         sh """
