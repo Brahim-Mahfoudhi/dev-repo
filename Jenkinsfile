@@ -146,11 +146,11 @@ pipeline {
                                 export SQL_CONNECTION_STRING=\${SQL_CONNECTION_STRING}
         
                                 # Modify appsettings.json
-                                sed -i 's|\\"ConnectionStrings\\": \\{\\}|\\"ConnectionStrings\\": \\{\\"SqlServer\\": \\"Server=\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\"\\}|g;' /var/lib/jenkins/artifacts/appsettings.json
-                                sed -i 's|\\"Auth0\\": \\{\\}|\\"Auth0\\": \\{\\"Authority\\": \\"https://dev-6yunsksn11owe71c.us.auth0.com/\\", \\"Audience\\": \\"https://api.rise.buut.com/\\", \\"M2MClientId\\": \\"\\${M2MCLIENTID}\\", \\"M2MClientSecret\\": \\"\\${M2MCLIENTSECRET}\\", \\"BlazorClientId\\": \\"\\${BLAZORCLIENTID}\\", \\"BlazorClientSecret\\": \\"\\${BLAZORCLIENTSECRET}\\\"\\}\}|g;' /var/lib/jenkins/artifacts/appsettings.json
+                                sed -i 's|\\"ConnectionStrings\\": \\{\\}|\\"ConnectionStrings\\": \\{\\"SqlServer\\": \\"Server=\\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\"\\}|g;' /var/lib/jenkins/artifacts/appsettings.json
+                                sed -i 's|\\"Auth0\\": \\{\\}|\\"Auth0\\": \\{\\"Authority\\": \\"https://dev-6yunsksn11owe71c.us.auth0.com/\\", \\"Audience\\": \\"https://api.rise.buut.com/\\", \\"M2MClientId\\": \\"\\${M2MCLIENTID}\\", \\"M2MClientSecret\\": \\"\\${M2MCLIENTSECRET}\\", \\"BlazorClientId\\": \\"\\${BLAZORCLIENTID}\\", \\"BlazorClientSecret\\": \\"\\${BLAZORCLIENTSECRET}\\\"\\}\\}|g;' /var/lib/jenkins/artifacts/appsettings.json
         
                                 # Modify appsettings.Development.json
-                                sed -i 's|\\"ConnectionStrings\\": \\{\\}|\\"ConnectionStrings\\": \\{\\"SqlServer\\": \\"Server=\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\"\\}|g;' /var/lib/jenkins/artifacts/appsettings.Development.json
+                                sed -i 's|\\"ConnectionStrings\\": \\{\\}|\\"ConnectionStrings\\": \\{\\"SqlServer\\": \\"Server=\\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\"\\}|g;' /var/lib/jenkins/artifacts/appsettings.Development.json
                                 sed -i 's|\\"Logging\\": \\{\\}|\\"Logging\\": \\{\\"LogLevel\\": \\{\\"Default\\": \\"Information\\", \\"Microsoft.AspNetCore\\": \\"Warning\\"\\}\}\}|g;' /var/lib/jenkins/artifacts/appsettings.Development.json
                             """
         
