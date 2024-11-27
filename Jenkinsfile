@@ -102,12 +102,15 @@ pipeline {
     post {
         success {
             script {
+                githubCommitStatus context: 'continuous-integration/jenkins', state: 'success', description: 'Tests passed'
                 sendDiscordNotification("Build Success")
             }
         }
         failure {
             script {
                 sendDiscordNotification("Build Failed")
+                githubCommitStatus context: 'continuous-integration/jenkins', state: 'failure', description: 'Tests failed'
+
             }
         }
     }
