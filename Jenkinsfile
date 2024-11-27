@@ -37,15 +37,60 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
+        stage('Restore Dependencies') {
             steps {
+                sh "dotnet restore ${DOTNET_PROJECT_PATH}"
+                sh "dotnet restore ${DOTNET_TEST_PATH}"
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                sh "dotnet build ${DOTNET_PROJECT_PATH}"
+            }
+        }
+
+        stage('Running Unit Tests') {
+            steps {
+                echo 'Running unit tests and collecting Clover coverage data...'
                 sh """
-                    dotnet restore ${DOTNET_PROJECT_PATH}
-                    dotnet build ${DOTNET_PROJECT_PATH}
-                    dotnet test ${DOTNET_TEST_PATH} --logger trx
+                    dotnet test ${DOTNET_TEST_PATH} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results.trx' \
+                    /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
+                    /p:CoverletOutputFormat=cobertura
                 """
             }
         }
+        
+        stage('Coverage Report') {
+            steps {
+                script {
+                    def testOutput = sh(script: "dotnet test ${DOTNET_TEST_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
+                    def coverageFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }.join(';')
+                    echo "Coverage files: ${coverageFiles}"
+        
+                    if (coverageFiles) {
+                        sh """
+                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
+                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
+                            cp ${coverageFiles} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
+                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
+                        """
+                    } else {
+                        error 'No coverage files found'
+                    }
+                }
+                echo 'Publishing coverage report...'
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
+                    reportFiles: 'index.html',
+                    reportName: 'Clover Coverage Report'
+                ])
+            }
+        }
+
 
         stage('Update GitHub Status') {
             steps {
