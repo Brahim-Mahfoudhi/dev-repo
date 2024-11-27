@@ -77,7 +77,7 @@ pipeline {
                     if (prNumber) {
                         try {
                             def response = httpRequest(
-                                url: "https://api.github.com/repos/${REPO_NAME}/pulls/${prNumber}/merge",
+                                url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
                                 httpMode: 'PUT',
                                 authentication: "${JENKINS_CREDENTIALS_ID}",
                                 customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json']],
