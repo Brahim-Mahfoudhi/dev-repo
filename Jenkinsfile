@@ -13,7 +13,6 @@ pipeline {
         JENKINS_CREDENTIALS_ID = "jenkins-master-key"
         REPO_NAME = "Brahim-Mahfoudhi/dev-repo"
         PR_NUMBER = "${ghprbPullId}"
-        commitSHA = env.GIT_COMMIT
     }
 
     stages {
