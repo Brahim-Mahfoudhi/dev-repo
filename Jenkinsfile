@@ -10,8 +10,7 @@ pipeline {
         DOTNET_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
         PUBLISH_OUTPUT = 'publish'
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
-        JENKINS_CREDENTIALS_ID = "GitHub-Personal-Access-Token-for-Jenkins"
-        GITHUB_CREDENTIALS_ID = "GitHub-Personal-Access-Token-for-Jenkins"
+        JENKINS_CREDENTIALS_ID = "jenkins-master-key"
         REPO_NAME = "Brahim-Mahfoudhi/dev-repo"
         PR_NUMBER = "${ghprbPullId}"
     }
@@ -81,7 +80,7 @@ pipeline {
                             def response = httpRequest(
                                 url: "https://api.github.com/repos/${REPO_NAME}/pulls/${prNumber}/merge",
                                 httpMode: 'PUT',
-                                authentication: "${GITHUB_CREDENTIALS_ID}",
+                                authentication: "${JENKINS_CREDENTIALS_ID}",
                                 customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json']],
                                 validResponseCodes: '200:299',
                                 contentType: 'APPLICATION_JSON',
@@ -102,14 +101,14 @@ pipeline {
     post {
         success {
             script {
-                githubCommitStatus context: 'continuous-integration/jenkins', state: 'success', description: 'Tests passed'
+                githubNotify context: 'continuous-integration/jenkins', state: 'success', description: 'Tests passed'
                 sendDiscordNotification("Build Success")
             }
         }
         failure {
             script {
                 sendDiscordNotification("Build Failed")
-                githubCommitStatus context: 'continuous-integration/jenkins', state: 'failure', description: 'Tests failed'
+                githubNotify context: 'continuous-integration/jenkins', state: 'failure', description: 'Tests failed'
 
             }
         }
