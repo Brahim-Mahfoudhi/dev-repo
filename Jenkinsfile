@@ -10,7 +10,7 @@ pipeline {
         DOTNET_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
         PUBLISH_OUTPUT = 'publish'
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
-        JENKINS_CREDENTIALS_ID = "jenkins-master-key"
+        JENKINS_CREDENTIALS_ID = "GitHub-Personal-Access-Token-for-Jenkins"
         REPO_NAME = "HOGENT-RISE/dotnet-2425-tiao1"
         PR_NUMBER = ""
     }
@@ -26,7 +26,7 @@ pipeline {
             steps {
                 script {
                     checkout([$class: 'GitSCM', branches: [[name: 'refs/pull/*/merge']], 
-                              userRemoteConfigs: [[url: 'git@github.com:HOGENT-RISE/dotnet-2425-tiao1.git', credentialsId: 'jenkins-master-key']]])
+                              userRemoteConfigs: [[url: 'git@github.com:HOGENT-RISE/dotnet-2425-tiao1.git', credentialsId: 'GitHub-Personal-Access-Token-for-Jenkins']]])
                     echo 'Gather GitHub info!'
                     def gitInfo = sh(script: 'git show -s HEAD --pretty=format:"%an%n%ae%n%s%n%H%n%h" 2>/dev/null', returnStdout: true).trim().split("\n")
                     env.GIT_AUTHOR_NAME = gitInfo[0]
