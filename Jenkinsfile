@@ -11,7 +11,8 @@ pipeline {
         PUBLISH_OUTPUT = 'publish'
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
         JENKINS_CREDENTIALS_ID = "GitHub-Personal-Access-Token-for-Jenkins"
-        REPO_NAME = "HOGENT-RISE/dotnet-2425-tiao1"
+        GITHUB_CREDENTIALS_ID = "GitHub-Personal-Access-Token-for-Jenkins"
+        REPO_NAME = "Brahim-Mahfoudhi/dev-repo"
         PR_NUMBER = "${ghprbPullId}"
     }
 
@@ -76,16 +77,20 @@ pipeline {
                 script {
                     def prNumber = env.PR_NUMBER
                     if (prNumber) {
-                        def response = httpRequest(
-                            url: "https://api.github.com/repos/${REPO_NAME}/pulls/${prNumber}/merge",
-                            httpMode: 'PUT',
-                            authentication: "${GITHUB_CREDENTIALS_ID}",
-                            customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json']],
-                            validResponseCodes: '200:299',
-                            contentType: 'APPLICATION_JSON',
-                            requestBody: '{"commit_title": "Auto-merged by Jenkins"}'
-                        )
-                        echo "Merge response: ${response.content}"
+                        try {
+                            def response = httpRequest(
+                                url: "https://api.github.com/repos/${REPO_NAME}/pulls/${prNumber}/merge",
+                                httpMode: 'PUT',
+                                authentication: "${GITHUB_CREDENTIALS_ID}",
+                                customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json']],
+                                validResponseCodes: '200:299',
+                                contentType: 'APPLICATION_JSON',
+                                requestBody: '{"commit_title": "Auto-merged by Jenkins"}'
+                            )
+                            echo "Merge response: ${response.content}"
+                        } catch (Exception e) {
+                            error "Failed to merge PR: ${e.message}"
+                        }
                     } else {
                         error 'PR_NUMBER is not set. Cannot merge PR.'
                     }
