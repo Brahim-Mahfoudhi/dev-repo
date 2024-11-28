@@ -26,6 +26,44 @@ pipeline {
             }
         }
 
+        stage('Find PR Number') {
+            steps {
+                script {
+                    // Ensure the repository is checked out
+                    checkout scm
+                    
+                    // Get the current commit SHA
+                    def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    echo "Current commit SHA: ${commitSHA}"
+        
+                    // Define the GitHub API endpoint to get PR number associated with the commit
+                    def apiUrl = "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/commits/${commitSHA}/pulls"
+                    
+                    // Use httpRequest to call the GitHub API
+                    def response = httpRequest(
+                        url: apiUrl,
+                        httpMode: 'GET',
+                        customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]],
+                        validResponseCodes: '200:299',
+                        contentType: 'APPLICATION_JSON'
+                    )
+        
+                    // Parse the response and extract PR number (if any)
+                    def prNumber = ""
+                    if (response) {
+                        def jsonResponse = readJSON text: response.content
+                        if (jsonResponse.size() > 0) {
+                            prNumber = jsonResponse[0].number
+                        }
+                    }
+        
+                    // Set the PR_NUMBER environment variable
+                    env.PR_NUMBER = prNumber
+                    echo "PR Number: ${env.PR_NUMBER}"
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 script {
@@ -33,8 +71,9 @@ pipeline {
                         error "PR_NUMBER is not set. Please ensure the PR number is provided."
                     }
                     checkout([$class: 'GitSCM', 
-                    branches: [[name: "refs/pull/${env.PR_NUMBER}/head"]], 
-                    userRemoteConfigs: [[url: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git', credentialsId: 'jenkins-master-key']]])
+                        branches: [[name: "refs/pull/${env.PR_NUMBER}/head"]], 
+                        userRemoteConfigs: [[url: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git', credentialsId: 'jenkins-master-key']]])
+
                     def gitInfo = sh(script: 'git show -s HEAD --pretty=format:"%an%n%ae%n%s%n%H%n%h" 2>/dev/null', returnStdout: true).trim().split("\n")
                     env.GIT_AUTHOR_NAME = gitInfo[0]
                     env.GIT_AUTHOR_EMAIL = gitInfo[1]
@@ -209,8 +248,4 @@ def isTestsSuccessful() {
 def sendDiscordNotification(status) {
     discordSend(
         title: "${env.JOB_NAME} - ${status}",
-        description: "Build #${env.BUILD_NUMBER} - ${status}\nSee details: ${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/",
-        webhookURL: "${DISCORD_WEBHOOK_URL}",
-        result: status == "Build Success" ? 'SUCCESS' : 'FAILURE'
-    )
-}
+        description: "Build #${env.BUILD_NUMBER} - ${status}\nSee details: ${env.JENKINS_SERVER}/job/${env.JOB_NAME
