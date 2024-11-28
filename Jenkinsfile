@@ -116,7 +116,7 @@ pipeline {
                     """
 
 
-                    withCredentials([string(credentialsId: "${JENKINS_CREDENTIALS_ID}", variable: 'GITHUB_TOKEN')]) {
+                    withCredentials([string(credentialsId: "jenkins-master-key", variable: 'GITHUB_TOKEN')]) {
 
                         def response = httpRequest(
                             url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
@@ -141,7 +141,7 @@ pipeline {
                     def prNumber = env.PR_NUMBER
                     if (prNumber) {
                         try {
-                            withCredentials([string(credentialsId: "${JENKINS_CREDENTIALS_ID}", variable: 'GITHUB_TOKEN')]) {
+                            withCredentials([string(credentialsId: "jenkins-master-key", variable: 'GITHUB_TOKEN')]) {
                                 def response = httpRequest(
                                     url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
                                     httpMode: 'PUT',
