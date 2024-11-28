@@ -39,14 +39,15 @@ pipeline {
                     // Define the GitHub API endpoint to get PR number associated with the commit
                     def apiUrl = "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/commits/${commitSHA}/pulls"
                     
-                    // Use httpRequest to call the GitHub API
-                    def response = httpRequest(
-                        url: apiUrl,
-                        httpMode: 'GET',
-                        customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]],
-                        validResponseCodes: '200:299',
-                        contentType: 'APPLICATION_JSON'
-                    )
+                    withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
+                        def response = httpRequest(
+                            url: apiUrl,
+                            httpMode: 'GET',
+                            customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]],
+                            validResponseCodes: '200:299',
+                            contentType: 'APPLICATION_JSON'
+                        )
+                    }
         
                     // Parse the response and extract PR number (if any)
                     def prNumber = ""
@@ -148,7 +149,7 @@ pipeline {
 
                     def requestBody = """
                     {
-                        "state": "${status}",
+                        "status": "${status}",
                         "target_url": "${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/",
                         "description": "Jenkins build ${status}",
                         "context": "Jenkins Build"
