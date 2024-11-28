@@ -96,16 +96,12 @@ pipeline {
         stage('Update GitHub Status') {
             steps {
                 script {
-
-                    checkout scm  // Ensures the repository is properly checked out before using git
-
-
+                    // Ensure the repository is checked out before using git
+                    checkout scm  
+        
                     def status = currentBuild.result == 'SUCCESS' ? 'success' : 'error'
-
-
                     def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-
-
+        
                     def requestBody = """
                     {
                         "state": "${status}",
@@ -114,14 +110,13 @@ pipeline {
                         "context": "Jenkins Build"
                     }
                     """
-
-
-                    withCredentials([string(credentialsId: "jenkins-master-key", variable: 'GITHUB_TOKEN')]) {
-
+        
+                    // Use the correct GitHub Token credential for API interaction
+                    withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
                         def response = httpRequest(
                             url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
                             httpMode: 'POST',
-                            authentication: "${GITHUB_TOKEN}", 
+                            authentication: "${GITHUB_TOKEN}",
                             contentType: 'APPLICATION_JSON',
                             requestBody: requestBody
                         )
@@ -141,7 +136,7 @@ pipeline {
                     def prNumber = env.PR_NUMBER
                     if (prNumber) {
                         try {
-                            withCredentials([string(credentialsId: "jenkins-master-key", variable: 'GITHUB_TOKEN')]) {
+                                withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: '')]) {
                                 def response = httpRequest(
                                     url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
                                     httpMode: 'PUT',
