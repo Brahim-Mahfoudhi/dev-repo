@@ -12,7 +12,7 @@ pipeline {
         PUBLISH_OUTPUT = 'publish'
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
         REPO_NAME = "Brahim-Mahfoudhi/dev-repo"
-        PR_NUMBER = "${ghprbPullId}"
+        PR_NUMBER = "${env.ghprbPullId}"
     }
 
     stages {
@@ -129,6 +129,26 @@ pipeline {
         stage('Debug PR Number') {
             steps {
                 echo "PR_NUMBER: ${PR_NUMBER}"
+            }
+        }
+
+        stage('Debug GitHub Variables') {
+            steps {
+                script {
+                    echo "CHANGE_ID: ${env.CHANGE_ID}"
+                    echo "CHANGE_NUMBER: ${env.CHANGE_NUMBER}"
+                    echo "BRANCH_NAME: ${env.BRANCH_NAME}"
+                }
+            }
+        }
+
+        stage('Debug PR Builder Variables') {
+            steps {
+                script {
+                    echo "ghprbPullId: ${env.ghprbPullId}"
+                    echo "ghprbSourceBranch: ${env.ghprbSourceBranch}"
+                    echo "ghprbTargetBranch: ${env.ghprbTargetBranch}"
+                }
             }
         }
 
