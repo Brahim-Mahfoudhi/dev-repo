@@ -120,7 +120,7 @@ pipeline {
                     httpRequest(
                         url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
                         httpMode: 'POST',
-                        authentication: "${JENKINS_CREDENTIALS_ID}",
+                        authentication: "jenkins-master-key",
                         contentType: 'APPLICATION_JSON',
                         requestBody: requestBody
                     )
