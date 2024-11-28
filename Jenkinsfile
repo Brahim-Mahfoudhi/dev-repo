@@ -111,8 +111,7 @@ pipeline {
                     }
                     """
         
-                    // Use the correct GitHub Token credential for API interaction
-                    withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
+                   withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
                         def response = httpRequest(
                             url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
                             httpMode: 'POST',
@@ -205,14 +204,14 @@ pipeline {
     post {
         success {
             script {
-                githubNotify context: 'continuous-integration/jenkins', state: 'success', description: 'Tests passed'
+                githubNotify context: 'continuous-integration/jenkins', state: 'SUCCESS', description: 'Tests passed'
                 sendDiscordNotification("Build Success")
             }
         }
         failure {
             script {
                 sendDiscordNotification("Build Failed")
-                githubNotify context: 'continuous-integration/jenkins', state: 'failure', description: 'Tests failed'
+                githubNotify context: 'continuous-integration/jenkins', state: 'FAILURE', description: 'Tests failed'
             }
         }
     }
