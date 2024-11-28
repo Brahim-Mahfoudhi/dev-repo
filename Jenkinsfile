@@ -93,19 +93,19 @@ pipeline {
                 ])
             }
         }
-        
+
         stage('Update GitHub Status') {
             steps {
                 script {
                     // Ensure the repository is checked out
                     checkout scm  // Ensures the repository is properly checked out before using git
-        
+
                     // Set the status to success or error
                     def status = currentBuild.result == 'SUCCESS' ? 'success' : 'error'
-        
+
                     // Get the commit SHA
                     def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-        
+
                     // Prepare the GitHub API request body
                     def requestBody = """
                     {
@@ -115,7 +115,7 @@ pipeline {
                         "context": "Jenkins Build"
                     }
                     """
-        
+
                     // Use 'withCredentials' to securely access the token stored in Jenkins
                     withCredentials([string(credentialsId: "${JENKINS_CREDENTIALS_ID}", variable: 'GITHUB_TOKEN')]) {
                         // Send a request to update the commit status using GitHub API
@@ -131,8 +131,6 @@ pipeline {
                 }
             }
         }
-
-
 
         stage('Merge to Main') {
             when {
@@ -164,6 +162,7 @@ pipeline {
                     }
                 }
             }
+        }
     }
 
     post {
