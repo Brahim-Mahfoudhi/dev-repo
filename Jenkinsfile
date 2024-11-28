@@ -229,27 +229,31 @@ pipeline {
     post {
         success {
             script {
-                githubNotify(
-                    context: 'Jenkins Build',
-                    status: 'SUCCESS',
-                    description: 'Tests passed',
-                    repo: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git',
-                    credentialsId: 'jenkins-master-key',
-                    sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                 sendDiscordNotification("Build Success")
+                 githubNotify(
+                    context: 'Jenkins Build',                  // Context for this notification
+                    status: 'SUCCESS',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
+                    description: 'Build failed',               // Description shown in GitHub
+                    account: 'Brahim-Mahfoudhi',               // GitHub account name
+                    credentialsId: 'jenkins-master-key',      // Jenkins credentials ID for GitHub access
+                    repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
+                    sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
+                    targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
                 )
-                sendDiscordNotification("Build Success")
             }
         }
         failure {
             script {
                 sendDiscordNotification("Build Failed")
                 githubNotify(
-                    context: 'Jenkins Build',
-                    status: 'FAILURE',
-                    description: 'Tests failed',
-                    repo: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git',
-                    credentialsId: 'jenkins-master-key',
-                    sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    context: 'Jenkins Build',                  // Context for this notification
+                    status: 'FAILURE',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
+                    description: 'Build failed',               // Description shown in GitHub
+                    account: 'Brahim-Mahfoudhi',               // GitHub account name
+                    credentialsId: 'jenkins-master-key',      // Jenkins credentials ID for GitHub access
+                    repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
+                    sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
+                    targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
                 )
             }
         }
