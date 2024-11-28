@@ -230,31 +230,35 @@ pipeline {
         success {
             script {
                  sendDiscordNotification("Build Success")
-                 githubNotify(
-                    context: 'Jenkins Build',                  // Context for this notification
-                    status: 'SUCCESS',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
-                    description: 'Build failed',               // Description shown in GitHub
-                    account: 'Brahim-Mahfoudhi',               // GitHub account name
-                    credentialsId: 'jenkins-master-key',      // Jenkins credentials ID for GitHub access
-                    repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
-                    sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
-                    targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
-                )
+                 withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
+                     githubNotify(
+                        context: 'Jenkins Build',                  // Context for this notification
+                        status: 'SUCCESS',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
+                        description: 'Build failed',               // Description shown in GitHub
+                        account: 'Brahim-Mahfoudhi',               // GitHub account name
+                        credentialsId: 'jenkins-master-key',      // Jenkins credentials ID for GitHub access
+                        repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
+                        sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
+                        targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
+                    )
+                 }
             }
         }
         failure {
             script {
                 sendDiscordNotification("Build Failed")
-                githubNotify(
-                    context: 'Jenkins Build',                  // Context for this notification
-                    status: 'FAILURE',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
-                    description: 'Build failed',               // Description shown in GitHub
-                    account: 'Brahim-Mahfoudhi',               // GitHub account name
-                    credentialsId: 'jenkins-master-key',      // Jenkins credentials ID for GitHub access
-                    repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
-                    sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
-                    targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
-                )
+                withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
+                    githubNotify(
+                        context: 'Jenkins Build',                  // Context for this notification
+                        status: 'FAILURE',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
+                        description: 'Build failed',               // Description shown in GitHub
+                        account: 'Brahim-Mahfoudhi',               // GitHub account name
+                        credentialsId: 'jenkins-master-key',      // Jenkins credentials ID for GitHub access
+                        repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
+                        sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
+                        targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
+                    )
+                }
             }
         }
     }
