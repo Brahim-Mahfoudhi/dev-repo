@@ -233,7 +233,7 @@ pipeline {
                     context: 'Jenkins Build',
                     status: 'SUCCESS',
                     description: 'Tests passed',
-                    repository: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git',
+                    repo: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git',
                     credentialsId: 'jenkins-master-key',
                     sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                 )
@@ -247,7 +247,7 @@ pipeline {
                     context: 'Jenkins Build',
                     status: 'FAILURE',
                     description: 'Tests failed',
-                    repository: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git',
+                    repo: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git',
                     credentialsId: 'jenkins-master-key',
                     sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                 )
