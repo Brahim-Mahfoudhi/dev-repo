@@ -29,14 +29,11 @@ pipeline {
         stage('Find PR Number') {
             steps {
                 script {
-                    // Ensure the repository is checked out
                     checkout scm
                     
-                    // Get the current commit SHA
                     def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     echo "Current commit SHA: ${commitSHA}"
         
-                    // Define the GitHub API endpoint to get PR number associated with the commit
                     def apiUrl = "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/commits/${commitSHA}/pulls"
                     
                     withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
@@ -47,20 +44,17 @@ pipeline {
                             validResponseCodes: '200:299',
                             contentType: 'APPLICATION_JSON'
                         )
-                    }
         
-                    // Parse the response and extract PR number (if any)
-                    def prNumber = ""
-                    if (response) {
-                        def jsonResponse = readJSON text: response.content
-                        if (jsonResponse.size() > 0) {
-                            prNumber = jsonResponse[0].number
+                        def prNumber = ""
+                        if (response) {
+                            def jsonResponse = readJSON text: response.content
+                            if (jsonResponse.size() > 0) {
+                                prNumber = jsonResponse[0].number
+                            }
                         }
+                        env.PR_NUMBER = prNumber
+                        echo "PR Number: ${env.PR_NUMBER}"
                     }
-        
-                    // Set the PR_NUMBER environment variable
-                    env.PR_NUMBER = prNumber
-                    echo "PR Number: ${env.PR_NUMBER}"
                 }
             }
         }
@@ -160,21 +154,12 @@ pipeline {
                         def response = httpRequest(
                             url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
                             httpMode: 'POST',
-                            customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]], 
+                            customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]],
                             contentType: 'APPLICATION_JSON',
                             requestBody: requestBody
                         )
                         echo "GitHub Status update response: ${response}"
                     }
-                }
-            }
-        }
-
-        stage('Debug All Environment Variables') {
-            steps {
-                script {
-                    echo "Listing all environment variables..."
-                    sh 'env | sort'
                 }
             }
         }
@@ -188,32 +173,34 @@ pipeline {
                     withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
                         def prNumber = "${env.PR_NUMBER}"
 
-                        // Debug: Ensure PR_NUMBER is set correctly
-                        echo "PR_NUMBER: ${env.PR_NUMBER}"
-
                         if (prNumber) {
                             try {
-                                def requestBody = """
-                                {
-                                    "commit_title": "Auto-merged by Jenkins",
-                                    "commit_message": "This pull request was merged automatically by Jenkins after successful tests.",
-                                    "merge_method": "merge"
+                                def mergeStatus = sh(script: "curl -s -H 'Authorization: Bearer ${GITHUB_TOKEN}' 'https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}'", returnStdout: true).trim()
+                                def mergeable = readJSON text: mergeStatus
+                                if (mergeable.mergeable == true) {
+                                    def requestBody = """
+                                    {
+                                        "commit_title": "Auto-merged by Jenkins",
+                                        "commit_message": "This pull request was merged automatically by Jenkins after successful tests.",
+                                        "merge_method": "merge"
+                                    }
+                                    """
+                                    def response = httpRequest(
+                                        url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
+                                        httpMode: 'PUT',
+                                        customHeaders: [
+                                            [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
+                                            [name: 'Accept', value: 'application/vnd.github.v3+json']
+                                        ],
+                                        validResponseCodes: '200:299',
+                                        contentType: 'APPLICATION_JSON',
+                                        requestBody: requestBody
+                                    )
+
+                                    echo "Pull Request Merge Response: ${response.content}"
+                                } else {
+                                    error "Pull request is not mergeable."
                                 }
-                                """
-
-                                def response = httpRequest(
-                                    url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
-                                    httpMode: 'PUT',
-                                    customHeaders: [
-                                        [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
-                                        [name: 'Accept', value: 'application/vnd.github.v3+json']
-                                    ],
-                                    validResponseCodes: '200:299',
-                                    contentType: 'APPLICATION_JSON',
-                                    requestBody: requestBody
-                                )
-
-                                echo "Pull Request Merge Response: ${response.content}"
                             } catch (Exception e) {
                                 error "Failed to merge PR: ${e.message}"
                             }
@@ -229,19 +216,19 @@ pipeline {
     post {
         success {
             script {
-                 sendDiscordNotification("Build Success")
-                 withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
-                     githubNotify(
-                        context: 'Jenkins Build',                  // Context for this notification
-                        status: 'SUCCESS',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
-                        description: 'Build failed',               // Description shown in GitHub
-                        account: 'Brahim-Mahfoudhi',               // GitHub account name
-                        credentialsId: "${GITHUB_TOKEN}",      // Jenkins credentials ID for GitHub access
-                        repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
-                        sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
-                        targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
+                sendDiscordNotification("Build Success")
+                withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
+                    githubNotify(
+                        context: 'Jenkins Build',
+                        status: 'SUCCESS',
+                        description: 'Build successful',
+                        account: 'Brahim-Mahfoudhi',
+                        credentialsId: "${GITHUB_TOKEN}",
+                        repo: 'Brahim-Mahfoudhi/dev-repo',
+                        sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),
+                        targetUrl: currentBuild.absoluteUrl
                     )
-                 }
+                }
             }
         }
         failure {
@@ -249,14 +236,14 @@ pipeline {
                 sendDiscordNotification("Build Failed")
                 withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
                     githubNotify(
-                        context: 'Jenkins Build',                  // Context for this notification
-                        status: 'FAILURE',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
-                        description: 'Build failed',               // Description shown in GitHub
-                        account: 'Brahim-Mahfoudhi',               // GitHub account name
-                        credentialsId: "${GITHUB_TOKEN}",      // Jenkins credentials ID for GitHub access
-                        repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
-                        sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
-                        targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
+                        context: 'Jenkins Build',
+                        status: 'ERROR',
+                        description: 'Build failed',
+                        account: 'Brahim-Mahfoudhi',
+                        credentialsId: "${GITHUB_TOKEN}",
+                        repo: 'Brahim-Mahfoudhi/dev-repo',
+                        sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),
+                        targetUrl: currentBuild.absoluteUrl
                     )
                 }
             }
@@ -264,15 +251,16 @@ pipeline {
     }
 }
 
-def isTestsSuccessful() {
-    return currentBuild.result == 'SUCCESS'
-}
-
-def sendDiscordNotification(status) {
-    discordSend(
-        title: "${env.JOB_NAME} - ${status}",
-        description: "Build #${env.BUILD_NUMBER} - ${status}\nSee details: ${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/",
-        webhookURL: "${DISCORD_WEBHOOK_URL}",
-        result: status == "Build Success" ? 'SUCCESS' : 'FAILURE'
+def sendDiscordNotification(message) {
+    def payload = [
+        content: message,
+        username: "Jenkins",
+        avatar_url: "https://www.jenkins.io/images/logos/jenkins/jenkins.png"
+    ]
+    httpRequest(
+        url: DISCORD_WEBHOOK_URL,
+        httpMode: 'POST',
+        requestBody: groovy.json.JsonOutput.toJson(payload),
+        contentType: 'APPLICATION_JSON'
     )
 }
