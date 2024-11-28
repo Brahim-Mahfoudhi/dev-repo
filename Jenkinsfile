@@ -218,7 +218,7 @@ pipeline {
         failure {
             script {
                 sendDiscordNotification("Build Failed")
-                githubNotify context: 'Jenkins Build ', state: 'FAILURE', description: 'Tests failed'
+                githubNotify context: 'Jenkins Build ', status: 'FAILURE', description: 'Tests failed'
             }
         }
     }
