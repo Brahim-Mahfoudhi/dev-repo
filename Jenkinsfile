@@ -137,6 +137,10 @@ pipeline {
         stage('Set PR_NUMBER') {
             steps {
                 script {
+                    // Debug: Print environment variables to verify correct ones are set
+                    echo "ghprbPullId: ${env.ghprbPullId}"
+                    echo "CHANGE_ID: ${env.CHANGE_ID}"
+
                     // Attempt to use Jenkins-provided variables
                     if (env.ghprbPullId) {
                         env.PR_NUMBER = env.ghprbPullId
@@ -166,6 +170,9 @@ pipeline {
                     withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
                         def prNumber = "${PR_NUMBER}"
         
+                        // Debug: Ensure PR_NUMBER is set correctly
+                        echo "PR_NUMBER: ${prNumber}"
+
                         if (prNumber) {
                             try {
                                 def requestBody = """
