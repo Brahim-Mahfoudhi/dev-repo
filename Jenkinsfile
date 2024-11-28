@@ -26,8 +26,8 @@ pipeline {
             steps {
                 script {
                     checkout([$class: 'GitSCM', 
-                        branches: [[name: 'refs/pull/*/merge']], 
-                        userRemoteConfigs: [[url: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git', credentialsId: 'jenkins-master-key']]
+                    branches: [[name: "refs/pull/${env.PR_NUMBER}/head"]], 
+                    userRemoteConfigs: [[url: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git', credentialsId: 'jenkins-master-key']]
                     ])
                     def gitInfo = sh(script: 'git show -s HEAD --pretty=format:"%an%n%ae%n%s%n%H%n%h" 2>/dev/null', returnStdout: true).trim().split("\n")
                     env.GIT_AUTHOR_NAME = gitInfo[0]
