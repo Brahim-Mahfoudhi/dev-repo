@@ -126,28 +126,25 @@ pipeline {
             }
         }
 
-        stage('Debug PR Number') {
-            steps {
-                echo "PR_NUMBER: ${PR_NUMBER}"
-            }
-        }
-
-        stage('Debug GitHub Variables') {
+        stage('Set PR_NUMBER') {
             steps {
                 script {
-                    echo "CHANGE_ID: ${env.CHANGE_ID}"
-                    echo "CHANGE_NUMBER: ${env.CHANGE_NUMBER}"
-                    echo "BRANCH_NAME: ${env.BRANCH_NAME}"
-                }
-            }
-        }
-
-        stage('Debug PR Builder Variables') {
-            steps {
-                script {
-                    echo "ghprbPullId: ${env.ghprbPullId}"
-                    echo "ghprbSourceBranch: ${env.ghprbSourceBranch}"
-                    echo "ghprbTargetBranch: ${env.ghprbTargetBranch}"
+                    // Attempt to use Jenkins-provided variables
+                    if (env.ghprbPullId) {
+                        env.PR_NUMBER = env.ghprbPullId
+                    } else if (env.CHANGE_ID) {
+                        env.PR_NUMBER = env.CHANGE_ID
+                    } else {
+                        // Fallback: Try extracting manually
+                        def branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                        echo "Branch Name: ${branchName}"
+                        if (branchName =~ /^PR-(\\d+)$/) {
+                            env.PR_NUMBER = branchName.replaceAll("PR-", "")
+                        } else {
+                            error "PR_NUMBER could not be determined. Please verify your pipeline setup."
+                        }
+                    }
+                    echo "Resolved PR_NUMBER: ${env.PR_NUMBER}"
                 }
             }
         }
