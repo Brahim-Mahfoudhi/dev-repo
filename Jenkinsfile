@@ -12,7 +12,11 @@ pipeline {
         PUBLISH_OUTPUT = 'publish'
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
         REPO_NAME = "git@github.com:Brahim-Mahfoudhi/dev-repo.git"
-        PR_NUMBER = ""
+        PR_NUMBER = "${params.PR_NUMBER}"
+    }
+
+    parameters {
+        string(name: 'PR_NUMBER', defaultValue: '', description: 'Pull Request Number')
     }
 
     stages {
@@ -25,10 +29,12 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 script {
+                    if (!env.PR_NUMBER) {
+                        error "PR_NUMBER is not set. Please ensure the PR number is provided."
+                    }
                     checkout([$class: 'GitSCM', 
                     branches: [[name: "refs/pull/${env.PR_NUMBER}/head"]], 
-                    userRemoteConfigs: [[url: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git', credentialsId: 'jenkins-master-key']]
-                    ])
+                    userRemoteConfigs: [[url: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git', credentialsId: 'jenkins-master-key']]])
                     def gitInfo = sh(script: 'git show -s HEAD --pretty=format:"%an%n%ae%n%s%n%H%n%h" 2>/dev/null', returnStdout: true).trim().split("\n")
                     env.GIT_AUTHOR_NAME = gitInfo[0]
                     env.GIT_AUTHOR_EMAIL = gitInfo[1]
@@ -145,7 +151,7 @@ pipeline {
         
                         // Debug: Ensure PR_NUMBER is set correctly
                         echo "PR_NUMBER: ${env.PR_NUMBER}"
-
+        
                         if (prNumber) {
                             try {
                                 def requestBody = """
@@ -179,7 +185,7 @@ pipeline {
                 }
             }
         }
-    }
+
 
     post {
         success {
