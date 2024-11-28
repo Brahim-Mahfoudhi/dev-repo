@@ -128,7 +128,7 @@ pipeline {
 
         stage('Debug PR Number') {
             steps {
-                echo "PR_NUMBER: ${env.PR_NUMBER}"
+                echo "PR_NUMBER: ${PR_NUMBER}"
             }
         }
 
