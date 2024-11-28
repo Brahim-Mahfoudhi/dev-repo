@@ -134,33 +134,6 @@ pipeline {
             }
         }
 
-        stage('Set PR_NUMBER') {
-            steps {
-                script {
-                    // Debug: Print environment variables to verify correct ones are set
-                    echo "ghprbPullId: ${env.ghprbPullId}"
-                    echo "CHANGE_ID: ${env.CHANGE_ID}"
-
-                    // Attempt to use Jenkins-provided variables
-                    if (env.ghprbPullId) {
-                        env.PR_NUMBER = env.ghprbPullId
-                    } else if (env.CHANGE_ID) {
-                        env.PR_NUMBER = env.CHANGE_ID
-                    } else {
-                        // Fallback: Try extracting manually
-                        def branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-                        echo "Branch Name: ${branchName}"
-                        if (branchName =~ /^PR-(\\d+)$/) {
-                            env.PR_NUMBER = branchName.replaceAll("PR-", "")
-                        } else {
-                            error "PR_NUMBER could not be determined. Please verify your pipeline setup."
-                        }
-                    }
-                    echo "Resolved PR_NUMBER: ${env.PR_NUMBER}"
-                }
-            }
-        }
-
         stage('Merge Pull Request') {
             when {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
@@ -168,10 +141,10 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
-                        def prNumber = "${PR_NUMBER}"
+                        def prNumber = "${env.PR_NUMBER}"
         
                         // Debug: Ensure PR_NUMBER is set correctly
-                        echo "PR_NUMBER: ${prNumber}"
+                        echo "PR_NUMBER: ${env.PR_NUMBER}"
 
                         if (prNumber) {
                             try {
