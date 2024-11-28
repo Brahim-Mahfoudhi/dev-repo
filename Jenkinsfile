@@ -126,6 +126,12 @@ pipeline {
             }
         }
 
+        stage('Debug PR Number') {
+            steps {
+                echo "PR_NUMBER: ${env.PR_NUMBER}"
+            }
+        }
+
         stage('Merge Pull Request') {
             when {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
@@ -133,7 +139,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
-                        def prNumber = env.PR_NUMBER
+                        def prNumber = "${PR_NUMBER}"
         
                         if (prNumber) {
                             try {
@@ -141,7 +147,7 @@ pipeline {
                                 {
                                     "commit_title": "Auto-merged by Jenkins",
                                     "commit_message": "This pull request was merged automatically by Jenkins after successful tests.",
-                                    "merge_method": "merge" // Optional: can also be "squash" or "rebase"
+                                    "merge_method": "merge"
                                 }
                                 """
         
