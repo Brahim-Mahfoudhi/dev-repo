@@ -93,32 +93,41 @@ pipeline {
                 ])
             }
         }
-
+        
         stage('Update GitHub Status') {
             steps {
                 script {
-                    // Make sure the repository is checked out
-                    checkout scm  // This ensures the repository is properly checked out before using git
+                    // Ensure the repository is checked out
+                    checkout scm  // This ensures that the repository is properly checked out before using git
         
-                    // Set the status to success or failure
-                    def status = currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'
-                    
+                    // Set the status to success or error
+                    def status = currentBuild.result == 'SUCCESS' ? 'success' : 'error'
+        
                     // Get the commit SHA
                     def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
         
-                    // Update GitHub status
-                    githubNotify(
-                        credentialsId: "${JENKINS_CREDENTIALS_ID}",
-                        repo: "${REPO_NAME}",
-                        sha: "${commitSHA}",
-                        context: "Jenkins Build",
-                        status: "${status}",
-                        description: "Jenkins build ${status}",
-                        targetUrl: "${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/"
+                    // Prepare the GitHub API request body
+                    def requestBody = """
+                    {
+                        "state": "${status}",
+                        "target_url": "${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/",
+                        "description": "Jenkins build ${status}",
+                        "context": "Jenkins Build"
+                    }
+                    """
+        
+                    // Send a request to update the commit status using GitHub API
+                    httpRequest(
+                        url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
+                        httpMode: 'POST',
+                        authentication: "${JENKINS_CREDENTIALS_ID}",
+                        contentType: 'APPLICATION_JSON',
+                        requestBody: requestBody
                     )
                 }
             }
         }
+
 
         stage('Merge to Main') {
             when {
