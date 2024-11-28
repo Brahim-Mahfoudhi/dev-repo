@@ -25,6 +25,20 @@ pipeline {
             }
         }
 
+        stage('Get PR Number') {
+            steps {
+                script {
+                    def prNumber = sh(script: """
+                        curl -H "Authorization: token ${env.GITHUB_TOKEN}" \
+                             https://api.github.com/repos/${env.REPO_OWNER}/${env.REPO_NAME}/pulls?head=${env.GIT_BRANCH} \
+                             | jq '.[0].number'
+                        """, returnStdout: true).trim()
+
+                    echo "The PR number is ${prNumber}"
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 script {
