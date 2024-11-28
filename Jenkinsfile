@@ -116,7 +116,7 @@ pipeline {
                         def response = httpRequest(
                             url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
                             httpMode: 'POST',
-                            customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]], // Correct way to pass the token
+                            customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]], 
                             contentType: 'APPLICATION_JSON',
                             requestBody: requestBody
                         )
@@ -126,34 +126,44 @@ pipeline {
             }
         }
 
-
-        stage('Merge to Main') {
+        stage('Merge Pull Request') {
             when {
-                branch 'main'
-                expression { currentBuild.result == 'SUCCESS' && isTestsSuccessful() }
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
                 script {
-                    def prNumber = env.PR_NUMBER
-                    if (prNumber) {
-                        try {
-                            withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
-                                 def response = httpRequest(
+                    withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
+                        def prNumber = env.PR_NUMBER
+        
+                        if (prNumber) {
+                            try {
+                                def requestBody = """
+                                {
+                                    "commit_title": "Auto-merged by Jenkins",
+                                    "commit_message": "This pull request was merged automatically by Jenkins after successful tests.",
+                                    "merge_method": "merge" // Optional: can also be "squash" or "rebase"
+                                }
+                                """
+        
+                                def response = httpRequest(
                                     url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
                                     httpMode: 'PUT',
-                                    authentication: "${GITHUB_TOKEN}", 
-                                    customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json']],
-                                    validResponseCodes: '200:299',
-                                    contentType: 'APPLICATION_JSON',
-                                    requestBody: '{"commit_title": "Auto-merged by Jenkins"}'
+                                    customHeaders: [
+                                        [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"], // Pass the token in header
+                                        [name: 'Accept', value: 'application/vnd.github.v3+json'] // Specify GitHub API version
+                                    ],
+                                    validResponseCodes: '200:299', // Allow success responses
+                                    contentType: 'APPLICATION_JSON', // Specify JSON content
+                                    requestBody: requestBody // JSON payload for the merge
                                 )
-                                echo "Merge response: ${response.content}"
+        
+                                echo "Pull Request Merge Response: ${response.content}"
+                            } catch (Exception e) {
+                                error "Failed to merge PR: ${e.message}"
                             }
-                        } catch (Exception e) {
-                            error "Failed to merge PR: ${e.message}"
+                        } else {
+                            error 'PR_NUMBER is not set. Cannot merge PR.'
                         }
-                    } else {
-                        error 'PR_NUMBER is not set. Cannot merge PR.'
                     }
                 }
             }
