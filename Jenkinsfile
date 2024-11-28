@@ -1,5 +1,6 @@
 pipeline {
     agent { label 'App' }
+
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
@@ -25,8 +26,10 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 script {
-                    checkout([$class: 'GitSCM', branches: [[name: 'refs/pull/*/merge']], 
-                              userRemoteConfigs: [[url: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git', credentialsId: 'jenkins-master-key']]])
+                    checkout([$class: 'GitSCM', 
+                        branches: [[name: 'refs/pull/*/merge']], 
+                        userRemoteConfigs: [[url: 'git@github.com:Brahim-Mahfoudhi/dev-repo.git', credentialsId: 'jenkins-master-key']]
+                    ])
                     def gitInfo = sh(script: 'git show -s HEAD --pretty=format:"%an%n%ae%n%s%n%H%n%h" 2>/dev/null', returnStdout: true).trim().split("\n")
                     env.GIT_AUTHOR_NAME = gitInfo[0]
                     env.GIT_AUTHOR_EMAIL = gitInfo[1]
@@ -60,14 +63,14 @@ pipeline {
                 """
             }
         }
-        
+
         stage('Coverage Report') {
             steps {
                 script {
                     def testOutput = sh(script: "dotnet test ${DOTNET_TEST_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
                     def coverageFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }.join(';')
                     echo "Coverage files: ${coverageFiles}"
-        
+
                     if (coverageFiles) {
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
@@ -91,7 +94,6 @@ pipeline {
             }
         }
 
-
         stage('Update GitHub Status') {
             steps {
                 script {
@@ -114,7 +116,7 @@ pipeline {
         stage('Merge to Main') {
             when {
                 branch 'main'
-                expression { currentBuild.result == 'SUCCESS' }
+                expression { currentBuild.result == 'SUCCESS' && isTestsSuccessful() }
             }
             steps {
                 script {
@@ -153,10 +155,13 @@ pipeline {
             script {
                 sendDiscordNotification("Build Failed")
                 githubNotify context: 'continuous-integration/jenkins', state: 'failure', description: 'Tests failed'
-
             }
         }
     }
+}
+
+def isTestsSuccessful() {
+    return currentBuild.result == 'SUCCESS'
 }
 
 def sendDiscordNotification(status) {
