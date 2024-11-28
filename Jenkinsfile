@@ -137,8 +137,8 @@ pipeline {
                     def prNumber = env.PR_NUMBER
                     if (prNumber) {
                         try {
-                                withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: '')]) {
-                                def response = httpRequest(
+                            withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
+                                 def response = httpRequest(
                                     url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
                                     httpMode: 'PUT',
                                     authentication: "${GITHUB_TOKEN}", 
