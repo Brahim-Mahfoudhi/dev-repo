@@ -88,7 +88,7 @@ pipeline {
                     }
                 }
                 echo 'Publishing coverage report...'
-                publishHTML([
+                publishHTML([ 
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
@@ -98,16 +98,15 @@ pipeline {
                 ])
             }
         }
-        
+
         stage('Update GitHub Status') {
             steps {
                 script {
-                    // Ensure the repository is checked out before using git
                     checkout scm  
-        
+
                     def status = currentBuild.result == 'SUCCESS' ? 'success' : 'error'
                     def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-        
+
                     def requestBody = """
                     {
                         "state": "${status}",
@@ -116,8 +115,8 @@ pipeline {
                         "context": "Jenkins Build"
                     }
                     """
-        
-                   withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
+
+                    withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
                         def response = httpRequest(
                             url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
                             httpMode: 'POST',
@@ -148,10 +147,10 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: "GitHub-Personal-Access-Token-for-Jenkins", variable: 'GITHUB_TOKEN')]) {
                         def prNumber = "${env.PR_NUMBER}"
-        
+
                         // Debug: Ensure PR_NUMBER is set correctly
                         echo "PR_NUMBER: ${env.PR_NUMBER}"
-        
+
                         if (prNumber) {
                             try {
                                 def requestBody = """
@@ -161,19 +160,19 @@ pipeline {
                                     "merge_method": "merge"
                                 }
                                 """
-        
+
                                 def response = httpRequest(
                                     url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
                                     httpMode: 'PUT',
                                     customHeaders: [
-                                        [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"], // Pass the token in header
-                                        [name: 'Accept', value: 'application/vnd.github.v3+json'] // Specify GitHub API version
+                                        [name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"],
+                                        [name: 'Accept', value: 'application/vnd.github.v3+json']
                                     ],
-                                    validResponseCodes: '200:299', // Allow success responses
-                                    contentType: 'APPLICATION_JSON', // Specify JSON content
-                                    requestBody: requestBody // JSON payload for the merge
+                                    validResponseCodes: '200:299',
+                                    contentType: 'APPLICATION_JSON',
+                                    requestBody: requestBody
                                 )
-        
+
                                 echo "Pull Request Merge Response: ${response.content}"
                             } catch (Exception e) {
                                 error "Failed to merge PR: ${e.message}"
@@ -185,7 +184,7 @@ pipeline {
                 }
             }
         }
-
+    }
 
     post {
         success {
@@ -197,7 +196,7 @@ pipeline {
         failure {
             script {
                 sendDiscordNotification("Build Failed")
-                githubNotify context: 'Jenkins Build ', status: 'FAILURE', description: 'Tests failed'
+                githubNotify context: 'Jenkins Build', status: 'FAILURE', description: 'Tests failed'
             }
         }
     }
