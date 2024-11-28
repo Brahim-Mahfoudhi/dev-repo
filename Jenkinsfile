@@ -248,4 +248,8 @@ def isTestsSuccessful() {
 def sendDiscordNotification(status) {
     discordSend(
         title: "${env.JOB_NAME} - ${status}",
-        description: "Build #${env.BUILD_NUMBER} - ${status}\nSee details: ${env.JENKINS_SERVER}/job/${env.JOB_NAME
+        description: "Build #${env.BUILD_NUMBER} - ${status}\nSee details: ${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/",
+        webhookURL: "${DISCORD_WEBHOOK_URL}",
+        result: status == "Build Success" ? 'SUCCESS' : 'FAILURE'
+    )
+}
