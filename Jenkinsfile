@@ -126,6 +126,15 @@ pipeline {
             }
         }
 
+        stage('Debug All Environment Variables') {
+            steps {
+                script {
+                    echo "Listing all environment variables..."
+                    sh 'env | sort'
+                }
+            }
+        }
+
         stage('Set PR_NUMBER') {
             steps {
                 script {
