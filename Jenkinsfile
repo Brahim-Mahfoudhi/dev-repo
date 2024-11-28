@@ -97,9 +97,16 @@ pipeline {
         stage('Update GitHub Status') {
             steps {
                 script {
-                    def status = currentBuild.result == 'SUCCESS' ? 'success' : 'error'
+                    // Make sure the repository is checked out
+                    checkout scm  // This ensures the repository is properly checked out before using git
+        
+                    // Set the status to success or failure
+                    def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
+                    
+                    // Get the commit SHA
                     def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-
+        
+                    // Update GitHub status
                     githubNotify(
                         credentialsId: "${JENKINS_CREDENTIALS_ID}",
                         repo: "${REPO_NAME}",
