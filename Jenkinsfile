@@ -97,7 +97,7 @@ pipeline {
         stage('Update GitHub Status') {
             steps {
                 script {
-                    def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
+                    def status = currentBuild.result == 'SUCCESS' ? 'success' : 'error'
                     def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
 
                     githubNotify(
