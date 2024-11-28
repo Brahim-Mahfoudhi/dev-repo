@@ -98,7 +98,7 @@ pipeline {
             steps {
                 script {
                     // Ensure the repository is checked out
-                    checkout scm  // This ensures that the repository is properly checked out before using git
+                    checkout scm  // Ensures the repository is properly checked out before using git
         
                     // Set the status to success or error
                     def status = currentBuild.result == 'SUCCESS' ? 'success' : 'error'
@@ -116,17 +116,22 @@ pipeline {
                     }
                     """
         
-                    // Send a request to update the commit status using GitHub API
-                    httpRequest(
-                        url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
-                        httpMode: 'POST',
-                        authentication: "${JENKINS_CREDENTIALS_ID}",
-                        contentType: 'APPLICATION_JSON',
-                        requestBody: requestBody
-                    )
+                    // Use 'withCredentials' to securely access the token stored in Jenkins
+                    withCredentials([string(credentialsId: "${JENKINS_CREDENTIALS_ID}", variable: 'GITHUB_TOKEN')]) {
+                        // Send a request to update the commit status using GitHub API
+                        def response = httpRequest(
+                            url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
+                            httpMode: 'POST',
+                            authentication: 'GitHub Token',  // Use the token passed from Jenkins credentials
+                            contentType: 'APPLICATION_JSON',
+                            requestBody: requestBody
+                        )
+                        echo "GitHub Status update response: ${response}"
+                    }
                 }
             }
         }
+
 
 
         stage('Merge to Main') {
@@ -139,16 +144,18 @@ pipeline {
                     def prNumber = env.PR_NUMBER
                     if (prNumber) {
                         try {
-                            def response = httpRequest(
-                                url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
-                                httpMode: 'PUT',
-                                authentication: "${JENKINS_CREDENTIALS_ID}",
-                                customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json']],
-                                validResponseCodes: '200:299',
-                                contentType: 'APPLICATION_JSON',
-                                requestBody: '{"commit_title": "Auto-merged by Jenkins"}'
-                            )
-                            echo "Merge response: ${response.content}"
+                            withCredentials([string(credentialsId: "${JENKINS_CREDENTIALS_ID}", variable: 'GITHUB_TOKEN')]) {
+                                def response = httpRequest(
+                                    url: "https://api.github.com/repos/Brahim-Mahfoudhi/dev-repo/pulls/${prNumber}/merge",
+                                    httpMode: 'PUT',
+                                    authentication: 'GitHub Token',  // Use the token for authentication
+                                    customHeaders: [[name: 'Accept', value: 'application/vnd.github.v3+json']],
+                                    validResponseCodes: '200:299',
+                                    contentType: 'APPLICATION_JSON',
+                                    requestBody: '{"commit_title": "Auto-merged by Jenkins"}'
+                                )
+                                echo "Merge response: ${response.content}"
+                            }
                         } catch (Exception e) {
                             error "Failed to merge PR: ${e.message}"
                         }
@@ -157,7 +164,6 @@ pipeline {
                     }
                 }
             }
-        }
     }
 
     post {
