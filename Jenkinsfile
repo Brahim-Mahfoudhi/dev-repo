@@ -25,18 +25,19 @@ pipeline {
                 cleanWs()
             }
         }
-
-        stage('Get PR Number') {
-            when {
-                expression { !params.PR_NUMBER } // Run this stage only if PR_NUMBER is not provided
-            }
-            steps {
-                script {
-                    echo "Fetching PR number from GitHub..."
+        
+    stage('Get PR Number') {
+        when {
+            expression { !params.PR_NUMBER } // Run this stage only if PR_NUMBER is not provided
+        }
+        steps {
+            script {
+                echo "Fetching PR number from GitHub..."
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     def response = httpRequest(
                         url: "https://api.github.com/repos/${env.REPO_OWNER}/${env.REPO_NAME}/pulls?head=${env.REPO_OWNER}:${env.GIT_BRANCH}",
                         httpMode: 'GET',
-                        customHeaders: [[name: 'Authorization', value: "Bearer ${env.GITHUB_TOKEN}"]],
+                        customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]],
                         validResponseCodes: '200'
                     )
                     def jsonResponse = readJSON text: response.content
@@ -49,6 +50,7 @@ pipeline {
                 }
             }
         }
+    }
 
         stage('Checkout Code') {
             steps {
