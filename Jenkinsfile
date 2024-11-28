@@ -101,7 +101,7 @@ pipeline {
                     checkout scm  // This ensures the repository is properly checked out before using git
         
                     // Set the status to success or failure
-                    def status = currentBuild.result == 'SUCCESS' ? 'success' : 'failure'
+                    def status = currentBuild.result == 'SUCCESS' ? 'SUCCESS' : 'FAILURE'
                     
                     // Get the commit SHA
                     def commitSHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
