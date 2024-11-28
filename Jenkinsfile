@@ -33,7 +33,7 @@ pipeline {
         steps {
             script {
                 echo "Fetching PR number from GitHub..."
-                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                withCredentials([string(credentialsId: 'GitHub-Personal-Access-Token-for-Jenkins', variable: 'GITHUB_TOKEN')]) {
                     def response = httpRequest(
                         url: "https://api.github.com/repos/${env.REPO_OWNER}/${env.REPO_NAME}/pulls?head=${env.REPO_OWNER}:${env.GIT_BRANCH}",
                         httpMode: 'GET',
