@@ -236,7 +236,7 @@ pipeline {
                         status: 'SUCCESS',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
                         description: 'Build failed',               // Description shown in GitHub
                         account: 'Brahim-Mahfoudhi',               // GitHub account name
-                        credentialsId: 'jenkins-master-key',      // Jenkins credentials ID for GitHub access
+                        credentialsId: "${GITHUB_TOKEN}",      // Jenkins credentials ID for GitHub access
                         repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
                         sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
                         targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
@@ -253,7 +253,7 @@ pipeline {
                         status: 'FAILURE',                         // Status of the build (can also be SUCCESS, ERROR, PENDING)
                         description: 'Build failed',               // Description shown in GitHub
                         account: 'Brahim-Mahfoudhi',               // GitHub account name
-                        credentialsId: 'jenkins-master-key',      // Jenkins credentials ID for GitHub access
+                        credentialsId: "${GITHUB_TOKEN}",      // Jenkins credentials ID for GitHub access
                         repo: 'Brahim-Mahfoudhi/dev-repo',         // Repository name in the form 'owner/repository'
                         sha: sh(script: 'git rev-parse HEAD', returnStdout: true).trim(),  // Get current commit SHA
                         targetUrl: currentBuild.absoluteUrl       // Optional: Link to the Jenkins build
