@@ -92,7 +92,7 @@ pipeline {
                 ])
             }
         }
-
+        
         stage('Update GitHub Status') {
             steps {
                 script {
@@ -116,7 +116,7 @@ pipeline {
                         def response = httpRequest(
                             url: "https://api.github.com/repos/${REPO_NAME}/statuses/${commitSHA}",
                             httpMode: 'POST',
-                            authentication: "${GITHUB_TOKEN}",
+                            customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]], // Correct way to pass the token
                             contentType: 'APPLICATION_JSON',
                             requestBody: requestBody
                         )
@@ -125,6 +125,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Merge to Main') {
             when {
