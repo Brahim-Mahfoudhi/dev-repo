@@ -16,7 +16,8 @@ pipeline {
     }
 
     parameters {
-        string(name: 'PR_NUMBER', defaultValue: '', description: 'Pull Request Number (Optional)')
+        string(name: 'PR_NUMBER', defaultValue: '', description: 'Pull Request Number (Optional, leave empty to test a branch)')
+        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Branch to build and test if no PR_NUMBER is provided')
     }
 
     stages {
@@ -25,53 +26,40 @@ pipeline {
                 cleanWs()
             }
         }
-        
-    stage('Get PR Number') {
-        when {
-            expression { !params.PR_NUMBER } // Run this stage only if PR_NUMBER is not provided
-        }
-        steps {
-            script {
-                echo "Fetching PR number from GitHub..."
-                withCredentials([string(credentialsId: 'GitHub-Personal-Access-Token-for-Jenkins', variable: 'GITHUB_TOKEN')]) {
-                    def response = httpRequest(
-                        url: "https://api.github.com/repos/${env.REPO_OWNER}/${env.REPO_NAME}/pulls?head=${env.REPO_OWNER}:${env.GIT_BRANCH}",
-                        httpMode: 'GET',
-                        customHeaders: [[name: 'Authorization', value: "Bearer ${GITHUB_TOKEN}"]],
-                        validResponseCodes: '200'
-                    )
-                    def jsonResponse = readJSON text: response.content
-                    if (jsonResponse && jsonResponse.size() > 0) {
-                        env.PR_NUMBER = jsonResponse[0].number.toString()
-                        echo "PR number is: ${env.PR_NUMBER}"
-                    } else {
-                        error "No PR found for branch ${env.GIT_BRANCH}."
-                    }
-                }
-            }
-        }
-    }
 
         stage('Checkout Code') {
             steps {
                 script {
-                    if (!env.PR_NUMBER) {
-                        error "PR_NUMBER is not set. Please ensure the PR number is provided or fetched correctly."
+                    if (params.PR_NUMBER) {
+                        echo "Checking out PR #${params.PR_NUMBER}"
+                        // Checkout the PR using refs/pull
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: "refs/pull/${params.PR_NUMBER}/head"]],
+                            userRemoteConfigs: [[
+                                url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
+                                credentialsId: 'jenkins-master-key'
+                            ]]
+                        ])
+                    } else {
+                        echo "Checking out branch ${params.BRANCH_NAME}"
+                        // Checkout the branch directly
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: "*/${params.BRANCH_NAME}"]],
+                            userRemoteConfigs: [[
+                                url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
+                                credentialsId: 'jenkins-master-key'
+                            ]]
+                        ])
                     }
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: "refs/pull/${env.PR_NUMBER}/head"]],
-                        userRemoteConfigs: [[
-                            url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
-                            credentialsId: 'jenkins-master-key'
-                        ]]
-                    ])
                 }
             }
         }
 
         stage('Restore Dependencies') {
             steps {
+                echo "Restoring dependencies..."
                 sh "dotnet restore ${DOTNET_PROJECT_PATH}"
                 sh "dotnet restore ${DOTNET_TEST_PATH}"
             }
@@ -79,14 +67,15 @@ pipeline {
 
         stage('Build Application') {
             steps {
-                sh "dotnet build ${DOTNET_PROJECT_PATH}"
+                echo "Building application..."
+                sh "dotnet build ${DOTNET_PROJECT_PATH} --no-restore"
             }
         }
 
         stage('Run Unit Tests') {
             steps {
-                echo 'Running unit tests...'
-                sh "dotnet test ${DOTNET_TEST_PATH}"
+                echo "Running unit tests..."
+                sh "dotnet test ${DOTNET_TEST_PATH} --no-restore --verbosity normal"
             }
         }
     }
@@ -94,12 +83,12 @@ pipeline {
     post {
         success {
             script {
-                sendDiscordNotification("Build Success: PR #${env.PR_NUMBER}")
+                sendDiscordNotification("✅ Build Success: ${params.PR_NUMBER ? "PR #${params.PR_NUMBER}" : "Branch ${params.BRANCH_NAME}"}")
             }
         }
         failure {
             script {
-                sendDiscordNotification("Build Failed: PR #${env.PR_NUMBER}")
+                sendDiscordNotification("❌ Build Failed: ${params.PR_NUMBER ? "PR #${params.PR_NUMBER}" : "Branch ${params.BRANCH_NAME}"}")
             }
         }
     }
