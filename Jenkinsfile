@@ -204,14 +204,14 @@ pipeline {
     post {
         success {
             script {
-                githubNotify context: 'continuous-integration/jenkins', state: 'SUCCESS', description: 'Tests passed'
+                githubNotify context: 'continuous-integration/jenkins', state: 'success', description: 'Tests passed'
                 sendDiscordNotification("Build Success")
             }
         }
         failure {
             script {
                 sendDiscordNotification("Build Failed")
-                githubNotify context: 'continuous-integration/jenkins', state: 'FAILURE', description: 'Tests failed'
+                githubNotify context: 'continuous-integration/jenkins', state: 'error', description: 'Tests failed'
             }
         }
     }
