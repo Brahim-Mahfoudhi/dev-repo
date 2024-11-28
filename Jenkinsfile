@@ -25,6 +25,15 @@ pipeline {
             }
         }
 
+    stage('Get PR Number') {
+            steps {
+                script {
+                    def prNumber = env.CHANGE_ID
+                    echo "The PR number is ${prNumber}"
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 script {
