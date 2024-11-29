@@ -23,14 +23,6 @@ pipeline {
             }
         }
 
-        stage('Print Environment Variables') {
-            steps {
-                script {
-                    echo "Environment Variables in this stage: ${env.inspect()}"
-                }
-            }
-        }
-
         stage('Debug Change Branch') {
             steps {
                 script {
