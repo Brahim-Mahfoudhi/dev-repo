@@ -22,22 +22,30 @@ pipeline {
                 cleanWs()
             }
         }
-    //${env.CHANGE_BRANCH}
-        stage('Debug Change Branch') {
+
+        stage('Print Environment Variables') {
             steps {
                 script {
-                    echo "CHANGE_BRANCH is: Brahim-Mahfoudhi-patch-4"
+                    echo "Environment Variables in this stage: ${env.inspect()}"
                 }
             }
         }
-//[[name: "*/${env.CHANGE_BRANCH}"]]
+
+        stage('Debug Change Branch') {
+            steps {
+                script {
+                    echo "CHANGE_BRANCH is: ${env.CHANGE_BRANCH}"
+                }
+            }
+        }
+
         stage('Checkout Pull Request') {
             steps {
                 script {
                     echo "Checking out pull request branch"
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: "*/Brahim-Mahfoudhi-patch-4"]],
+                        branches: [[name: "*/${env.CHANGE_BRANCH}"]],
                         userRemoteConfigs: [[
                             url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
                             credentialsId: 'jenkins-master-key'
