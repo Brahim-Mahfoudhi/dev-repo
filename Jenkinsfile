@@ -19,6 +19,13 @@ pipeline {
     }
 
     stages {
+        
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        
         stage('Show GitHub Environment Variablesssss') {
             steps {
                 script {
