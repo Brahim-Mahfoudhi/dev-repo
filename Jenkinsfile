@@ -21,6 +21,14 @@ pipeline {
                 cleanWs()
             }
         }
+        
+        stage('Debug Change Branch') {
+            steps {
+                script {
+                    echo "CHANGE_BRANCH is: ${env.CHANGE_BRANCH}"
+                }
+            }
+        }
 
         stage('Checkout Pull Request') {
             steps {
