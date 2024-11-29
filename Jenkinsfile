@@ -28,14 +28,6 @@ pipeline {
             }
         }
 
-        stage('Print Environment Variables') {
-            steps {
-                script {
-                    echo "Environment Variables in this stage: ${env.inspect()}"
-                }
-            }
-        }
-
         stage('Checkout') {
             steps {
                 script {
