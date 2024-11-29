@@ -11,13 +11,8 @@ pipeline {
         DOTNET_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
         REPO_OWNER = "Brahim-Mahfoudhi"
         REPO_NAME = "dev-repo"
-        GIT_BRANCH = "main"
+        GIT_BRANCH = 'main' 
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
-    }
-
-    parameters {
-        string(name: 'PR_NUMBER', defaultValue: '', description: 'Pull Request Number (Optional, leave empty to test a branch)')
-        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Branch to build and test if no PR_NUMBER is provided')
     }
 
     stages {
@@ -27,32 +22,18 @@ pipeline {
             }
         }
 
-        stage('Checkout Code') {
+        stage('Checkout Pull Request') {
             steps {
                 script {
-                    if (params.PR_NUMBER) {
-                        echo "Checking out PR #${params.PR_NUMBER}"
-                        // Checkout the PR using refs/pull
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: "refs/pull/${params.PR_NUMBER}/head"]],
-                            userRemoteConfigs: [[
-                                url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
-                                credentialsId: 'jenkins-master-key'
-                            ]]
-                        ])
-                    } else {
-                        echo "Checking out branch ${params.BRANCH_NAME}"
-                        // Checkout the branch directly
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: "*/${params.BRANCH_NAME}"]],
-                            userRemoteConfigs: [[
-                                url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
-                                credentialsId: 'jenkins-master-key'
-                            ]]
-                        ])
-                    }
+                    echo "Checking out pull request branch"
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "*/${env.CHANGE_BRANCH}"]],
+                        userRemoteConfigs: [[
+                            url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
+                            credentialsId: 'jenkins-master-key'
+                        ]]
+                    ])
                 }
             }
         }
@@ -72,38 +53,83 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
+        stage('Running Unit Tests') {
             steps {
-                echo "Running unit tests..."
-                sh "dotnet test ${DOTNET_TEST_PATH} --no-restore --verbosity normal"
+                echo 'Running unit tests and collecting Clover coverage data...'
+                sh """
+                    dotnet test ${DOTNET_TEST_PATH} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results.trx' \
+                    /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
+                    /p:CoverletOutputFormat=cobertura
+                """
+            }
+        }
+
+        stage('Coverage Report') {
+            steps {
+                script {
+                    def testOutput = sh(script: "dotnet test ${DOTNET_TEST_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
+                    def coverageFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }.join(';')
+                    echo "Coverage files: ${coverageFiles}"
+        
+                    if (coverageFiles) {
+                        sh """
+                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
+                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
+                            cp ${coverageFiles} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
+                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
+                        """
+                    } else {
+                        error 'No coverage files found'
+                    }
+                }
+                echo 'Publishing coverage report...'
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
+                    reportFiles: 'index.html',
+                    reportName: 'Clover Coverage Report'
+                ])
             }
         }
     }
 
     post {
         success {
+            echo 'Build and Tests completed successfully!'
             script {
-                sendDiscordNotification("✅ Build Success: ${params.PR_NUMBER ? "PR #${params.PR_NUMBER}" : "Branch ${params.BRANCH_NAME}"}")
+                sendDiscordNotification("Build Success")
             }
         }
         failure {
+            echo 'Build or Tests have failed.'
             script {
-                sendDiscordNotification("❌ Build Failed: ${params.PR_NUMBER ? "PR #${params.PR_NUMBER}" : "Branch ${params.BRANCH_NAME}"}")
+                sendDiscordNotification("Build Failed")
             }
         }
     }
 }
 
-def sendDiscordNotification(message) {
-    def payload = [
-        content: message,
-        username: "Jenkins",
-        avatar_url: "https://www.jenkins.io/images/logos/jenkins/jenkins.png"
-    ]
-    httpRequest(
-        url: DISCORD_WEBHOOK_URL,
-        httpMode: 'POST',
-        requestBody: groovy.json.JsonOutput.toJson(payload),
-        contentType: 'APPLICATION_JSON'
-    )
+def sendDiscordNotification(status) {
+    script {
+        discordSend(
+            title: "${env.JOB_NAME} - ${status}",
+            description: """
+                Build #${env.BUILD_NUMBER} ${status == "Build Success" ? 'completed successfully!' : 'has failed!'}
+                **Commit**: ${env.GIT_COMMIT}
+                **Author**: ${env.GIT_AUTHOR_NAME} <${env.GIT_AUTHOR_EMAIL}>
+                **Branch**: ${env.GIT_BRANCH}
+                **Message**: ${env.GIT_COMMIT_MESSAGE}
+                
+                [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
+                [**Test result**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
+                [**Coverage report**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
+                [**History**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
+            """,
+            footer: "Build Duration: ${currentBuild.durationString.replace(' and counting', '')}",
+            webhookURL: DISCORD_WEBHOOK_URL,
+            result: status == "Build Success" ? 'SUCCESS' : 'FAILURE'
+        )
+    }
 }
