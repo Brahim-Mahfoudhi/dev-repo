@@ -27,7 +27,7 @@ pipeline {
         stage('Debug Change Branch') {
             steps {
                 script {
-                    echo "CHANGE_BRANCH is: ${env.PR_ID}"
+                    echo "CHANGE_BRANCH is: ${ghprbPullId}"
                 }
             }
         }
@@ -46,7 +46,7 @@ pipeline {
                     echo "Checking out pull request branch"
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: "refs/pull/${env.PR_ID}/head"]],
+                        branches: [[name: "refs/pull/${ghprbPullId}/head"]],
                         extensions: [[$class: 'CleanBeforeCheckout']],
                         userRemoteConfigs: [[
                             url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
