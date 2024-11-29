@@ -25,8 +25,8 @@ pipeline {
                 cleanWs()
             }
         }
-        
-        stage('Show GitHub Environment Variablesssss') {
+
+        stage('Show GitHub Environment Variables') {
             steps {
                 script {
                     // Print all environment variables
@@ -43,11 +43,11 @@ pipeline {
                     if (env.CHANGE_ID) {
                         echo "This is a pull request build. Checking out PR #${env.CHANGE_ID}."
                         // Checkout the PR using the PR ID (from GitHub PR)
-                        git credentialsId: 'jenkins-master-key', url: 'git@github.com:HOGENT-RISE/dotnet-2425-tiao1.git', branch: "refs/pull/${env.CHANGE_ID}/head"
+                        git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", branch: "refs/pull/${env.CHANGE_ID}/head"
                     } else {
                         echo "This is a regular branch build. Checking out the main branch."
                         // Checkout the main branch if it's not a PR build
-                        git credentialsId: 'jenkins-master-key', url: 'git@github.com:HOGENT-RISE/dotnet-2425-tiao1.git', branch: 'main'
+                        git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", branch: 'main'
                     }
                     
                     // Gather GitHub commit info
@@ -60,31 +60,6 @@ pipeline {
                     env.GIT_COMMIT_MESSAGE = gitInfo[2]
                     env.GIT_COMMIT = gitInfo[3]
                     env.GIT_BRANCH = gitInfo[4]
-                }
-            }
-        }
-        
-        stage('Check for Pull Request') {
-            steps {
-                script {
-                    if (!env.CHANGE_ID) {
-                        echo "This build is not triggered by a Pull Request. Skipping the pipeline."
-                        currentBuild.result = 'ABORTED'
-                        return
-                    }
-                }
-            }
-        }
-
-        stage('Checkout Pull Request') {
-            steps {
-                script {
-                    echo "Checking out Pull Request: ${env.CHANGE_ID} from branch ${env.CHANGE_BRANCH}"
-                    // Fetch and checkout the PR branch
-                    sh """
-                        git fetch origin pull/${env.CHANGE_ID}/head:pr/${env.CHANGE_ID}
-                        git checkout pr/${env.CHANGE_ID}
-                    """
                 }
             }
         }
@@ -134,7 +109,7 @@ pipeline {
                     }
                 }
                 echo 'Publishing coverage report...'
-                publishHTML([
+                publishHTML([ 
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
@@ -175,8 +150,8 @@ def sendDiscordNotification(status) {
                 
                 [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
                 [**Test result**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
+
                 [**Coverage report**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
-                [**History**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
             """,
             footer: "Build Duration: ${currentBuild.durationString.replace(' and counting', '')}",
             webhookURL: DISCORD_WEBHOOK_URL,
