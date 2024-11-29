@@ -37,7 +37,7 @@ pipeline {
                     echo "Checking out pull request branch"
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: "*/Brahim-Mahfoudhi-patch-4]],
+                        branches: [[name: "*/Brahim-Mahfoudhi-patch-4"]],
                         userRemoteConfigs: [[
                             url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
                             credentialsId: 'jenkins-master-key'
