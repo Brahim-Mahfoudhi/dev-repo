@@ -10,11 +10,9 @@ pipeline {
         DOTNET_PROJECT_PATH = 'Rise.Server/Rise.Server.csproj'
         DOTNET_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
         REPO_OWNER = "Brahim-Mahfoudhi"
-        REPO_NAME = "dev-repo"
+        REPO_NAME = "dotnet-2425-tiao1"
         GIT_BRANCH = 'main' 
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
-        //PR_ID = "${ghprbPullId}"
-        TEST="zas"
     }
 
     parameters {
@@ -22,20 +20,26 @@ pipeline {
     }
 
     stages {
-        stage('Clean Workspace') {
+        stage('Check for Pull Request') {
             steps {
-                cleanWs()
+                script {
+                    if (!env.CHANGE_ID) {
+                        echo "This build is not triggered by a Pull Request. Skipping the pipeline."
+                        currentBuild.result = 'ABORTED'
+                        return
+                    }
+                }
             }
         }
 
-        stage('Checkout') {
+        stage('Checkout PR') {
             steps {
                 script {
-                    if (params.sha1) {
-                        sh "git checkout ${params.sha1}"
-                    } else {
-                        checkout scm
-                    }
+                    echo "Checking out Pull Request: ${env.CHANGE_ID}"
+                    sh """
+                        git fetch origin pull/${env.CHANGE_ID}/head:pr/${env.CHANGE_ID}
+                        git checkout pr/${env.CHANGE_ID}
+                    """
                 }
             }
         }
