@@ -39,11 +39,11 @@ pipeline {
                     echo "Checking out pull request branch"
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: '*/main'], [name: '*/refs/pull/${ghprbPullId}/head']],
+                        branches: [[name: '*/main'], [name: '*/refs/pull/${ghprbPullId}/head'], [name: "refs/pull/${env.ghprbPullId}/merge"]],
                         extensions: [[$class: 'CleanBeforeCheckout']],
                         userRemoteConfigs: [[
                             url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
-                            credentialsId: 'jenkins-master-key'
+                            credentialsId: 'GitHub-Personal-Access-Token-for-Jenkins'
                         ]]
                     ])
                 }
