@@ -14,7 +14,6 @@ pipeline {
         GIT_BRANCH = 'main' 
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
         PR_ID = "${ghprbPullId}"
-        //TEST_
     }
 
     parameters {
@@ -40,13 +39,8 @@ pipeline {
             steps {
                 script {
                     if (params.sha1) {
-                        echo "Checking out commit ${params.sha1}"
-                        // Checkout specific commit if sha1 is provided
-                        sh "git fetch origin ${params.sha1}:${params.sha1}"
                         sh "git checkout ${params.sha1}"
                     } else {
-                        echo "Checking out default branch: ${env.GIT_BRANCH}"
-                        // Default to main branch if sha1 is not provided
                         checkout scm
                     }
                 }
