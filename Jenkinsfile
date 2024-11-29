@@ -19,6 +19,44 @@ pipeline {
     }
 
     stages {
+        stage('Show GitHub Environment Variablesssss') {
+            steps {
+                script {
+                    // Print all environment variables
+                    echo "Displaying all environment variables:"
+                    sh 'env'
+                }
+            }
+        }
+
+        stage('Checkout Code') {
+            steps {
+                script {
+                    // Check if this is a PR build or a regular branch build
+                    if (env.CHANGE_ID) {
+                        echo "This is a pull request build. Checking out PR #${env.CHANGE_ID}."
+                        // Checkout the PR using the PR ID (from GitHub PR)
+                        git credentialsId: 'jenkins-master-key', url: 'git@github.com:HOGENT-RISE/dotnet-2425-tiao1.git', branch: "refs/pull/${env.CHANGE_ID}/head"
+                    } else {
+                        echo "This is a regular branch build. Checking out the main branch."
+                        // Checkout the main branch if it's not a PR build
+                        git credentialsId: 'jenkins-master-key', url: 'git@github.com:HOGENT-RISE/dotnet-2425-tiao1.git', branch: 'main'
+                    }
+                    
+                    // Gather GitHub commit info
+                    echo 'Gathering GitHub info!'
+                    def gitInfo = sh(script: 'git show -s HEAD --pretty=format:"%an%n%ae%n%s%n%H%n%h" 2>/dev/null', returnStdout: true).trim().split("\n")
+                    
+                    // Set the environment variables
+                    env.GIT_AUTHOR_NAME = gitInfo[0]
+                    env.GIT_AUTHOR_EMAIL = gitInfo[1]
+                    env.GIT_COMMIT_MESSAGE = gitInfo[2]
+                    env.GIT_COMMIT = gitInfo[3]
+                    env.GIT_BRANCH = gitInfo[4]
+                }
+            }
+        }
+        
         stage('Check for Pull Request') {
             steps {
                 script {
