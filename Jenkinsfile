@@ -11,9 +11,7 @@ pipeline {
         DOTNET_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
         REPO_OWNER = "Brahim-Mahfoudhi"
         REPO_NAME = "dev-repo"
-        GIT_BRANCH = "refs/pull/${env.CHANGE_ID}/merge" // Correct branch reference
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
-        TEST = "zass"
     }
 
     parameters {
@@ -33,13 +31,14 @@ pipeline {
             }
         }
 
-        stage('Checkout PR') {
+        stage('Checkout Pull Request') {
             steps {
                 script {
                     echo "Checking out Pull Request: ${env.CHANGE_ID} from branch ${env.CHANGE_BRANCH}"
+                    // Fetch and checkout the PR branch
                     sh """
-                        git fetch origin pull/${env.CHANGE_ID}/head:pr-branch
-                        git checkout pr-branch
+                        git fetch origin pull/${env.CHANGE_ID}/head:pr/${env.CHANGE_ID}
+                        git checkout pr/${env.CHANGE_ID}
                     """
                 }
             }
@@ -47,6 +46,7 @@ pipeline {
 
         stage('Restore Dependencies') {
             steps {
+                echo "Restoring dependencies..."
                 sh "dotnet restore ${DOTNET_PROJECT_PATH}"
                 sh "dotnet restore ${DOTNET_TEST_PATH}"
             }
@@ -89,7 +89,7 @@ pipeline {
                     }
                 }
                 echo 'Publishing coverage report...'
-                publishHTML([ 
+                publishHTML([
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
@@ -125,13 +125,13 @@ def sendDiscordNotification(status) {
                 Build #${env.BUILD_NUMBER} ${status == "Build Success" ? 'completed successfully!' : 'has failed!'}
                 **Commit**: ${env.GIT_COMMIT}
                 **Author**: ${env.GIT_AUTHOR_NAME} <${env.GIT_AUTHOR_EMAIL}>
-                **Branch**: ${env.GIT_BRANCH}  // Now reflects the correct PR branch
+                **Branch**: ${env.GIT_BRANCH}
                 **Message**: ${env.GIT_COMMIT_MESSAGE}
                 
-                [**Build output**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
-                [**Test result**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
-                [**Coverage report**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
-                [**History**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
+                [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
+                [**Test result**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
+                [**Coverage report**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
+                [**History**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
             """,
             footer: "Build Duration: ${currentBuild.durationString.replace(' and counting', '')}",
             webhookURL: DISCORD_WEBHOOK_URL,
