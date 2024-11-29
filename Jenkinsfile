@@ -33,13 +33,14 @@ pipeline {
             }
         }
 
+        //refs/pull/${ghprbPullId}/head
         stage('Checkout Pull Request') {
             steps {
                 script {
                     echo "Checking out pull request branch"
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: 'refs/pull/${ghprbPullId}/head']],
+                        branches: [[name: '*/main']],
                         extensions: [[$class: 'CleanBeforeCheckout']],
                         userRemoteConfigs: [[
                             url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
