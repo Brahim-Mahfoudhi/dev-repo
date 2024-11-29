@@ -13,7 +13,7 @@ pipeline {
         REPO_NAME = "dev-repo"
         GIT_BRANCH = 'main' 
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
-        //TEST=""
+        TEST=""
         PR_ID = "${ghprbPullId}"
     }
 
