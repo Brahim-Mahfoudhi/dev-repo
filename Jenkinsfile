@@ -2,7 +2,7 @@ pipeline {
     agent { label 'App' }
 
     options {
-        buildDiscarder(logRotator(numToKeepStr: '1'))
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     environment {
