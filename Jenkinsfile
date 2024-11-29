@@ -29,7 +29,6 @@ pipeline {
         stage('Show GitHub Environment Variables') {
             steps {
                 script {
-                    // Print all environment variables
                     echo "Displaying all environment variables:"
                     sh 'env'
                 }
@@ -150,8 +149,8 @@ def sendDiscordNotification(status) {
                 
                 [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
                 [**Test result**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
-
                 [**Coverage report**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
+                [**History**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
             """,
             footer: "Build Duration: ${currentBuild.durationString.replace(' and counting', '')}",
             webhookURL: DISCORD_WEBHOOK_URL,
