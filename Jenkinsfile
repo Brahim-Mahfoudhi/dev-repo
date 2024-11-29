@@ -24,6 +24,15 @@ pipeline {
             }
         }
 
+        stage('Print Environment Variables') {
+            steps {
+                script {
+                    // Print all environment variables for this stage
+                    echo "Environment Variables in this stage: ${env.inspect()}"
+                }
+            }
+        }
+
         stage('Checkout Pull Request') {
             steps {
                 script {
