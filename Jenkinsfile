@@ -39,14 +39,14 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 script {
-                    // Check if this is a PR build or a regular branch build
-                    if (env.CHANGE_ID) {
-                        echo "This is a pull request build. Checking out PR #${env.CHANGE_ID}."
-                        // Checkout the PR using the PR ID (from GitHub PR)
-                        git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", branch: "refs/pull/${env.CHANGE_ID}/head"
+                    // Use sha1 if provided
+                    if (params.sha1) {
+                        echo "Checking out commit ${params.sha1}."
+                        // Checkout the specified commit
+                        git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", commit: params.sha1
                     } else {
-                        echo "This is a regular branch build. Checking out the main branch."
-                        // Checkout the main branch if it's not a PR build
+                        echo "No sha1 provided. Checking out the main branch."
+                        // If no sha1, fallback to main branch
                         git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", branch: 'main'
                     }
                     
