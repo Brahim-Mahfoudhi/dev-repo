@@ -49,7 +49,7 @@ pipeline {
                         branches: [[name: "refs/pull/${ghprbPullId}/head"]],
                         extensions: [[$class: 'CleanBeforeCheckout']],
                         userRemoteConfigs: [[
-                            url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
+                            url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}",
                             credentialsId: 'jenkins-master-key'
                         ]]
                     ])
