@@ -31,6 +31,14 @@ pipeline {
             }
         }
 
+         stage('Print Environment Variables') {
+            steps {
+                script {
+                    sh 'printenv'
+                }
+            }
+        }
+
         stage('Checkout Pull Request') {
             steps {
                 script {
