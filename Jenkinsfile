@@ -38,11 +38,20 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 script {
-                    // Use sha1 if provided
+                    // Use sha1 if provided, or checkout the main branch by default
                     if (params.sha1) {
                         echo "Checking out commit ${params.sha1}."
-                        // Checkout the specified commit
-                        git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", commit: params.sha1
+                        // If it's a PR, fetch it properly
+                        if (params.sha1.startsWith("refs/pull/")) {
+                            echo "Fetching and checking out pull request ${params.sha1}."
+                            // Fetch the PR ref
+                            sh "git fetch origin ${params.sha1}:refs/remotes/origin/pr-${params.sha1.split('/')[2]}"
+                            // Checkout the PR
+                            sh "git checkout pr-${params.sha1.split('/')[2]}"
+                        } else {
+                            // Checkout the specific commit if it's a sha1
+                            git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", commit: params.sha1
+                        }
                     } else {
                         echo "No sha1 provided. Checking out the main branch."
                         // If no sha1, fallback to main branch
