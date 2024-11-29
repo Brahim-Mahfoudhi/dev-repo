@@ -30,7 +30,7 @@ pipeline {
                     echo "Checking out pull request branch"
                     checkout([
                         $class: 'GitSCM',
-                        branches: [[name: 'refs/pull/${ghprbPullId}/head:refs/remotes/origin/pr/${ghprbPullId}']],
+                        branches: [[name: 'refs/pull/${ghprbPullId}/head']],
                         extensions: [[$class: 'CleanBeforeCheckout']],
                         userRemoteConfigs: [[
                             url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
