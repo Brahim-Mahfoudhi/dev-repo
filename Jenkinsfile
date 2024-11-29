@@ -50,7 +50,7 @@ pipeline {
                         extensions: [[$class: 'CleanBeforeCheckout']],
                         userRemoteConfigs: [[
                             url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
-                            credentialsId: 'jenkins-master-key'
+                            credentialsId: 'GitHub-Personal-Access-Token-for-Jenkins'
                         ]]
                     ])
                 }
