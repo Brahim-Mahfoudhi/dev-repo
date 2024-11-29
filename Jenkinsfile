@@ -11,9 +11,9 @@ pipeline {
         DOTNET_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
         REPO_OWNER = "Brahim-Mahfoudhi"
         REPO_NAME = "dev-repo"
-        GIT_BRANCH = 'main' 
+        GIT_BRANCH = env.CHANGE_BRANCH ?: 'main'  // Dynamically set GIT_BRANCH to the PR branch or default to 'main'
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
-        TEST="zass"
+        TEST = "zass"
     }
 
     parameters {
@@ -36,7 +36,7 @@ pipeline {
         stage('Checkout PR') {
             steps {
                 script {
-                    echo "Checking out Pull Request: ${env.CHANGE_ID}"
+                    echo "Checking out Pull Request: ${env.CHANGE_ID} from branch ${env.CHANGE_BRANCH}"
                     sh """
                         git fetch origin pull/${env.CHANGE_ID}/head:pr/${env.CHANGE_ID}
                         git checkout pr/${env.CHANGE_ID}
@@ -125,7 +125,7 @@ def sendDiscordNotification(status) {
                 Build #${env.BUILD_NUMBER} ${status == "Build Success" ? 'completed successfully!' : 'has failed!'}
                 **Commit**: ${env.GIT_COMMIT}
                 **Author**: ${env.GIT_AUTHOR_NAME} <${env.GIT_AUTHOR_EMAIL}>
-                **Branch**: ${env.GIT_BRANCH}
+                **Branch**: ${env.GIT_BRANCH}  // Now reflects the correct PR branch
                 **Message**: ${env.GIT_COMMIT_MESSAGE}
                 
                 [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
