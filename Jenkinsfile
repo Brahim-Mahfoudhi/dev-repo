@@ -48,7 +48,6 @@ pipeline {
 
         stage('Restore Dependencies') {
             steps {
-                echo "Restoring dependencies..."
                 sh "dotnet restore ${DOTNET_PROJECT_PATH}"
                 sh "dotnet restore ${DOTNET_TEST_PATH}"
             }
