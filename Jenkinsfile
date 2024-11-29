@@ -17,6 +17,10 @@ pipeline {
         PR_ID = "${ghprbPullId}"
     }
 
+    parameters {
+        string(name: 'sha1', defaultValue: '', description: 'Commit SHA1')
+    }
+
     stages {
         stage('Clean Workspace') {
             steps {
@@ -32,24 +36,19 @@ pipeline {
             }
         }
 
-        //refs/pull/${ghprbPullId}/head
-        stage('Checkout Pull Request') {
+ 
+    stages {
+        stage('Checkout') {
             steps {
                 script {
-                    echo "Checking out pull request branch"
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: '*/main'], [name: '*/refs/pull/${ghprbPullId}/head'], [name: "refs/pull/${env.ghprbPullId}/merge"]],
-                        extensions: [[$class: 'CleanBeforeCheckout']],
-                        userRemoteConfigs: [[
-                            url: "git@github.com:${env.REPO_OWNER}/${env.REPO_NAME}.git",
-                            credentialsId: 'GitHub-Personal-Access-Token-for-Jenkins'
-                        ]]
-                    ])
+                    if (params.sha1) {
+                        sh "git checkout ${params.sha1}"
+                    } else {
+                        checkout scm
+                    }
                 }
             }
         }
-
         stage('Restore Dependencies') {
             steps {
                 sh "dotnet restore ${DOTNET_PROJECT_PATH}"
