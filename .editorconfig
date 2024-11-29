@@ -1,6 +1,6 @@
 # Root editorconfig file
 root = true
-
+#RR
 # All C# files
 [*.cs]
 [*.razor]
