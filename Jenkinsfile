@@ -50,9 +50,10 @@ pipeline {
                             def prNumber = params.sha1.split('/')[2]
                             
                             // Fetch both `head` and `merge` refs for the PR
-                            sh "git fetch origin +refs/pull/${prNumber}/head:refs/remotes/origin/pr-${prNumber}-head"
-                            sh "git fetch origin +refs/pull/${prNumber}/merge:refs/remotes/origin/pr-${prNumber}-merge"
-                            
+                            sshagent(credentials: ['jenkins-master-key']) {
+                                sh "git fetch origin +refs/pull/${prNumber}/head:refs/remotes/origin/pr-${prNumber}-head"
+                                sh "git fetch origin +refs/pull/${prNumber}/merge:refs/remotes/origin/pr-${prNumber}-merge"
+                            }
                             // Checkout the appropriate ref based on preference (merge or head)
                             sh "git checkout refs/remotes/origin/pr-${prNumber}-merge || git checkout refs/remotes/origin/pr-${prNumber}-head"
                         } else {
