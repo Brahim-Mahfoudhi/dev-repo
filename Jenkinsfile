@@ -25,42 +25,32 @@ pipeline {
             }
         }
 
-        stage('Show GitHub Environment Variables') {
-            steps {
-                script {
-                    echo "Displaying all environment variables:"
-                    sh 'env'
-                }
-            }
-        }
 
        stage('Checkout Code') {
             steps {
                 script {
                     if (params.sha1) {
                         echo "Checking out commit ${params.sha1}."
-                        // Clone the repository if it’s not initialized
                         sh "git init"
                         sh "git remote add origin git@github.com:${REPO_OWNER}/${REPO_NAME}.git"
                         
                         if (params.sha1.startsWith("origin/pr/")) {
                             echo "Fetching and checking out pull request ${params.sha1}."
                             
-                            // Split the PR number
                             def prNumber = params.sha1.split('/')[2]
                             
                             sshagent(credentials: ['jenkins-master-key']) {
                                 sh "git fetch origin +refs/pull/${prNumber}/head:refs/remotes/origin/pr-${prNumber}-head"
                                 sh "git fetch origin +refs/pull/${prNumber}/merge:refs/remotes/origin/pr-${prNumber}-merge"
                             }
-                            // Checkout the appropriate ref based on preference (merge or head)
+
                             sh "git checkout refs/remotes/origin/pr-${prNumber}-merge || git checkout refs/remotes/origin/pr-${prNumber}-head"
                         } else {
                             sh "git fetch origin ${params.sha1}"
                             sh "git checkout ${params.sha1}"
                         }
                     } else {
-                        echo "No sha1 provided. Checking out the main branch."
+                        echo "No sha1 provided. Checking the main branch"
                         
                         git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", branch: 'main'
                     }
@@ -138,13 +128,13 @@ pipeline {
 
     post {
         success {
-            echo 'Build and Tests completed successfully!'
+            echo 'Merge Tests completed successfully!'
             script {
                 sendDiscordNotification("Build Success")
             }
         }
         failure {
-            echo 'Build or Tests have failed.'
+            echo 'Merge Tests have failed.'
             script {
                 sendDiscordNotification("Build Failed")
             }
@@ -157,7 +147,7 @@ def sendDiscordNotification(status) {
         discordSend(
             title: "${env.JOB_NAME} - ${status}",
             description: """
-                Build #${env.BUILD_NUMBER} ${status == "Build Success" ? 'completed successfully!' : 'has failed!'}
+                Build #${env.BUILD_NUMBER} ${status == "Merge test Success" ? 'completed successfully!' : 'has failed!'}
                 **Commit**: ${env.GIT_COMMIT}
                 **Author**: ${env.GIT_AUTHOR_NAME} <${env.GIT_AUTHOR_EMAIL}>
                 **Branch**: ${env.GIT_BRANCH}
@@ -168,7 +158,7 @@ def sendDiscordNotification(status) {
                 [**Coverage report**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
                 [**History**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
             """,
-            footer: "Build Duration: ${currentBuild.durationString.replace(' and counting', '')}",
+            footer: "Merge test Duration: ${currentBuild.durationString.replace(' and counting', '')}",
             webhookURL: DISCORD_WEBHOOK_URL,
             result: status == "Build Success" ? 'SUCCESS' : 'FAILURE'
         )
