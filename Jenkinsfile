@@ -24,7 +24,7 @@ pipeline {
                 echo "Cleaning Git repository"
                 sh 'git clean -fdx'
                 echo "Fetching latest code"
-                cleanWs(deleteDirs: true) //tes
+                cleanWs(deleteDirs: true) //test
                 checkout scm
             }
         }
