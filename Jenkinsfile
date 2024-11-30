@@ -24,7 +24,7 @@ pipeline {
                 echo "Cleaning Git repository"
                 sh 'git clean -fdx'
                 echo "Fetching latest code"
-                cleanWs(deleteDirs: true) //testing
+                cleanWs(deleteDirs: true)
                 sshagent(credentials: ['jenkins-master-key']) {
                         sh 'ssh -o StrictHostKeyChecking=no jenkins@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"'
                 }
@@ -37,9 +37,6 @@ pipeline {
                 script {
                     if (params.sha1) {
                         echo "Checking out commit ${params.sha1}."
-                        //sh "git init"
-                        //sh "git remote add origin git@github.com:${REPO_OWNER}/${REPO_NAME}.git"
-                        
                         if (params.sha1.startsWith("origin/pr/")) {
                             echo "Fetching and checking out pull request ${params.sha1}."
                             
@@ -126,7 +123,7 @@ pipeline {
                     keepAll: true,
                     reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
                     reportFiles: 'index.html',
-                    reportName: 'Clover Coverage Report'
+                    reportName: 'Coverage Report'
                 ])
             }
         }
