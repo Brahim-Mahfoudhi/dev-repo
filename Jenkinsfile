@@ -42,7 +42,6 @@ pipeline {
                         if (params.sha1.startsWith("origin/pr/")) {
                             echo "Fetching and checking out pull request ${params.sha1}."
                             
-                            // Split the PR number
                             def prNumber = params.sha1.split('/')[2]
                             
                             // Fetch both `head` and `merge` refs for the PR
