@@ -21,6 +21,8 @@ pipeline {
     stages {
        stage('Clean Workspace') {
             steps {
+                echo "Checking out the latest repository code"
+                checkout scm  // Always fetches the latest commit from the repository
                 cleanWs(deleteDirs: true)
             }
         }
