@@ -34,8 +34,8 @@ pipeline {
                 script {
                     if (params.sha1) {
                         echo "Checking out commit ${params.sha1}."
-                        sh "git init"
-                        sh "git remote add origin git@github.com:${REPO_OWNER}/${REPO_NAME}.git"
+                        //sh "git init"
+                        //sh "git remote add origin git@github.com:${REPO_OWNER}/${REPO_NAME}.git"
                         
                         if (params.sha1.startsWith("origin/pr/")) {
                             echo "Fetching and checking out pull request ${params.sha1}."
