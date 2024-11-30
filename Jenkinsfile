@@ -34,14 +34,19 @@ pipeline {
             }
         }
 
-        stage('Checkout Code') {
+       stage('Checkout Code') {
             steps {
                 script {
                     if (params.sha1) {
                         echo "Checking out commit ${params.sha1}."
+                        // Clone the repository if it’s not initialized
+                        sh "git init"
+                        sh "git remote add origin git@github.com:${REPO_OWNER}/${REPO_NAME}.git"
+                        
                         if (params.sha1.startsWith("origin/pr/")) {
                             echo "Fetching and checking out pull request ${params.sha1}."
                             
+                            // Split the PR number
                             def prNumber = params.sha1.split('/')[2]
                             
                             // Fetch both `head` and `merge` refs for the PR
@@ -49,21 +54,22 @@ pipeline {
                             sh "git fetch origin +refs/pull/${prNumber}/merge:refs/remotes/origin/pr-${prNumber}-merge"
                             
                             // Checkout the appropriate ref based on preference (merge or head)
-                            sh "git checkout origin/pr-${prNumber}-merge || git checkout origin/pr-${prNumber}-head"
+                            sh "git checkout refs/remotes/origin/pr-${prNumber}-merge || git checkout refs/remotes/origin/pr-${prNumber}-head"
                         } else {
-                            // Checkout the specific commit if it's a sha1
-                            git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", commit: params.sha1
+                            // Fetch and checkout the specific commit if it's a SHA1
+                            sh "git fetch origin ${params.sha1}"
+                            sh "git checkout ${params.sha1}"
                         }
                     } else {
                         echo "No sha1 provided. Checking out the main branch."
-                        // If no sha1, fallback to main branch
+                        
                         git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", branch: 'main'
                     }
-
+        
                     // Gather GitHub commit info
                     echo 'Gathering GitHub info!'
                     def gitInfo = sh(script: 'git show -s HEAD --pretty=format:"%an%n%ae%n%s%n%H%n%h" 2>/dev/null', returnStdout: true).trim().split("\n")
-
+        
                     // Set the environment variables
                     env.GIT_AUTHOR_NAME = gitInfo[0]
                     env.GIT_AUTHOR_EMAIL = gitInfo[1]
@@ -73,6 +79,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Restore Dependencies') {
             steps {
