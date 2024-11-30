@@ -24,7 +24,7 @@ pipeline {
                 echo "Cleaning Git repository"
                 sh 'git clean -fdx'
                 echo "Fetching latest code"
-                cleanWs(deleteDirs: true) //testi
+                cleanWs(deleteDirs: true) //testing
                 sshagent(credentials: ['jenkins-ssh-key']) {
                         sh 'ssh -o StrictHostKeyChecking=no jenkins@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"'
                 checkout scm
