@@ -22,7 +22,7 @@ pipeline {
        stage('Clean Workspace') {
             steps {
                 echo "Checking out the latest repository code"
-                checkout scm  // Always fetches the latest commit from the repository
+                checkout scm  // Always fetches the latest commit from the repository1
                 cleanWs(deleteDirs: true)
             }
         }
