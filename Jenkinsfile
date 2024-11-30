@@ -40,7 +40,6 @@ pipeline {
                 script {
                     if (params.sha1) {
                         echo "Checking out commit ${params.sha1}."
-                        // If it's a PR, fetch it properly
                         if (params.sha1.startsWith("refs/pull/")) {
                             echo "Fetching and checking out pull request ${params.sha1}."
                             // Fetch the PR ref
