@@ -56,7 +56,6 @@ pipeline {
                             // Checkout the appropriate ref based on preference (merge or head)
                             sh "git checkout refs/remotes/origin/pr-${prNumber}-merge || git checkout refs/remotes/origin/pr-${prNumber}-head"
                         } else {
-                            // Fetch and checkout the specific commit if it's a SHA1
                             sh "git fetch origin ${params.sha1}"
                             sh "git checkout ${params.sha1}"
                         }
