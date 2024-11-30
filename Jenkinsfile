@@ -38,7 +38,6 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 script {
-                    // Use sha1 if provided, or checkout the main branch by default
                     if (params.sha1) {
                         echo "Checking out commit ${params.sha1}."
                         // If it's a PR, fetch it properly
