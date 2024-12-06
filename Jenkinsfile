@@ -1,6 +1,6 @@
 pipeline {
     agent { label 'App' }
-
+    
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
     }
