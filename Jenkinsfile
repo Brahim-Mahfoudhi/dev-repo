@@ -15,7 +15,7 @@ pipeline {
     }
 
     parameters {
-        string(name: 'sha', defaultValue: '', description: 'Commit sha')
+        string(name: 'sha1', defaultValue: '', description: 'Commit sha1')
     }
 
     stages {
@@ -25,7 +25,7 @@ pipeline {
                 sh 'git clean -fdx'
                 echo "Fetching latest code"
                 cleanWs(deleteDirs: true)
-                sshagent(credentials: ['jenkins-master-key']) {
+                ssha1gent(credentials: ['jenkins-master-key']) {
                         sh 'ssh -o StrictHostKeyChecking=no jenkins@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"'
                 }
                 checkout scm
@@ -35,25 +35,25 @@ pipeline {
        stage('Checkout Code') {
             steps {
                 script {
-                    if (params.sha) {
-                        echo "Checking out commit ${params.sha}."
-                        if (params.sha.startsWith("origin/pr/")) {
-                            echo "Fetching and checking out pull request ${params.sha}."
+                    if (params.sha1) {
+                        echo "Checking out commit ${params.sha1}."
+                        if (params.sha1.startsWith("origin/pr/")) {
+                            echo "Fetching and checking out pull request ${params.sha1}."
                             
-                            def prNumber = params.sha.split('/')[2]
+                            def prNumber = params.sha1.split('/')[2]
                             
-                            sshagent(credentials: ['jenkins-master-key']) {
+                            ssha1gent(credentials: ['jenkins-master-key']) {
                                 sh "git fetch origin +refs/pull/${prNumber}/head:refs/remotes/origin/pr-${prNumber}-head"
                                 sh "git fetch origin +refs/pull/${prNumber}/merge:refs/remotes/origin/pr-${prNumber}-merge"
                             }
 
                             sh "git checkout refs/remotes/origin/pr-${prNumber}-merge || git checkout refs/remotes/origin/pr-${prNumber}-head"
                         } else {
-                            sh "git fetch origin ${params.sha}"
-                            sh "git checkout ${params.sha}"
+                            sh "git fetch origin ${params.sha1}"
+                            sh "git checkout ${params.sha1}"
                         }
                     } else {
-                        echo "No sha provided. Checking the main branch"
+                        echo "No sha1 provided. Checking the main branch"
                         
                         git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", branch: 'main'
                     }
