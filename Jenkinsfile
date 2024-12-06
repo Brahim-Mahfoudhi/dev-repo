@@ -61,7 +61,6 @@ pipeline {
                     echo 'Gathering GitHub info!'
                     def gitInfo = sh(script: 'git show -s HEAD --pretty=format:"%an%n%ae%n%s%n%H%n%h" 2>/dev/null', returnStdout: true).trim().split("\n")
         
-                    // Set the environment variables
                     env.GIT_AUTHOR_NAME = gitInfo[0]
                     env.GIT_AUTHOR_EMAIL = gitInfo[1]
                     env.GIT_COMMIT_MESSAGE = gitInfo[2]
