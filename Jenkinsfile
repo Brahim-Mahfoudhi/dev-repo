@@ -25,9 +25,11 @@ pipeline {
                 sh 'git clean -fdx'
                 echo "Fetching latest code"
                 cleanWs(deleteDirs: true)
-                sshagent(credentials: ['jenkins-master-key']) {
-                        sh 'ssh -o StrictHostKeyChecking=no jenkins@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"'
-                }
+                // sshagent(credentials: ['jenkins-master-key']) {
+                sh '''
+                    ssh -i /var/lib/jenkins/.ssh/control_linode -o StrictHostKeyChecking=no jenkins@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"
+                '''
+                //}
                 checkout scm
             }
         }
