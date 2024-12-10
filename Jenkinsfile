@@ -103,16 +103,11 @@ pipeline {
                         Domain: 'Rise.Domain.Tests/Rise.Domain.Tests.csproj',
                         Client: 'Rise.Client.Tests/Rise.Client.Tests.csproj',
                         Server: 'Rise.Server.Tests/Rise.Server.Tests.csproj',
-                        Service: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
+                        Services: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
                     ]
-        
-                    // Ensure the coverage directory exists before running tests
-                    sh "mkdir -p /var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/"
         
                     testPaths.each { name, path ->
                         echo "Running unit tests for ${name} located at ${path}..."
-        
-                        // Run tests and collect code coverage
                         def testOutput = sh(script: """
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
                             /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/coverage.xml' \
