@@ -124,9 +124,8 @@ pipeline {
                         
                         echo "Generating coverage report for ${name}..."
                         sh """
-                            mkdir -p /var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report/
                             mkdir -p /var/lib/jenkins/agent/workspace/merge-pipeline/coverage/
-                            cp ${coverageFiles} /var/lib/jenkins/agent/workspace/merge-pipeline/coverage/
+                            mkdir -p /var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report/
                             /home/jenkins/.dotnet/tools/reportgenerator \
                                 -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage/coverage.cobertura.xml \
                                 -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/${name} \
@@ -146,7 +145,6 @@ pipeline {
                     if (coverageFiles.size() > 0) {
                         echo "Generating combined coverage report..."
                         sh """
-                            mkdir -p /var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report/
                             cp ${coverageFiles.join(';')} /var/lib/jenkins/agent/workspace/merge-pipeline/coverage/
                             /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage/coverage.cobertura.xml \
                             -targetdir:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report/ -reporttype:Html
