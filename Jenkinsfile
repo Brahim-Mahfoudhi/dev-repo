@@ -124,17 +124,14 @@ pipeline {
         success {
             echo 'Merge Tests completed successfully!'
             script {
-                sendDiscordNotification("Build Success")
+                sendDiscordNotification("PR test Success")
             }
         }
         failure {
             echo 'Merge Tests have failed.'
             script {
-                sendDiscordNotification("Build Failed")
+                sendDiscordNotification("PR test Failed")
             }
-        }
-        always {
-            echo 'Build process has completed.'
         }
     }
 }
@@ -144,16 +141,20 @@ def sendDiscordNotification(status) {
         discordSend(
             title: "${env.JOB_NAME} - ${status}",
             description: """
-                Build #${env.BUILD_NUMBER} ${status == "Build Success" ? 'completed successfully!' : 'has failed!'}
+                Build #${env.BUILD_NUMBER} ${status == "PR test Success" ? 'completed successfully!' : 'has failed!'}
                 **Commit**: ${env.GIT_COMMIT}
                 **Author**: ${env.GIT_AUTHOR_NAME} <${env.GIT_AUTHOR_EMAIL}>
                 **Branch**: ${env.GIT_BRANCH}
                 **Message**: ${env.GIT_COMMIT_MESSAGE}
                 
-                [**Build output**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
-                [**Test result**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
-                [**Coverage report**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
-            """
+                [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
+                [**Test result**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
+                [**Coverage report**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
+                [**History**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
+            """,
+            footer: "Merge test Duration: ${currentBuild.durationString.replace(' and counting', '')}",
+            webhookURL: DISCORD_WEBHOOK_URL,
+            result: status == "PR test Success" ? 'SUCCESS' : 'FAILURE'
         )
     }
 }
