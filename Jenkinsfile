@@ -115,7 +115,7 @@ pipeline {
                         // Run tests and collect code coverage
                         def testOutput = sh(script: """
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
-                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/${name}/' \
+                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/${name}/coverage.xml' \
                             /p:CoverletOutputFormat=cobertura
                         """, returnStdout: true)
         
