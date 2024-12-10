@@ -110,7 +110,7 @@ pipeline {
                         echo "Running unit tests for ${name} located at ${path}..."
                         
                         sh """
-                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results.trx' \
+                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
                              /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
                              /p:CoverletOutputFormat=cobertura
                         """
