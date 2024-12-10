@@ -106,101 +106,18 @@ pipeline {
                         Service: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
                     ]
         
-                    //def coverageFiles = []
-                    
                     testPaths.each { name, path ->
                         echo "Running unit tests for ${name} located at ${path}..."
                         
-                        // Run unit tests with code coverage collection
                         def testOutput = sh(script: """
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
                             /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
                             /p:CoverletOutputFormat=cobertura
                         """, returnStdout: true).trim()
-        
-                        // Collect coverage file paths
-                       // def foundFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }
-                        //coverageFiles += foundFiles
-        
-                        // echo "Coverage files: ${foundFiles.join(';')}"
-                        
-                        // Generate coverage report for each test
-                        //echo "Generating coverage report for ${name}..."
-                        //sh """
-                            //mkdir -p /var/lib/jenkins/agent/workspace/coverage-report/${name}
-                            ///home/jenkins/.dotnet/tools/reportgenerator \
-                                //-reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
-                                //-targetdir:/var/lib/jenkins/agent/workspace/coverage-report/ \
-                                //-reporttype:Html
-                        //"""
-        
-                        //publishHTML([
-                            //allowMissing: false,
-                            //alwaysLinkToLastBuild: true,
-                            //keepAll: true,
-                            //reportDir: "/var/lib/jenkins/agent/workspace/coverage-report/${name}",
-                            //reportFiles: 'index.html',
-                            //reportName: "Coverage Report for ${name}"
-                        //])
-                    //}
-        
-                    // Combine and generate overall coverage report if coverage files exist
-                    //if (coverageFiles.size() > 0) {
-                        //echo "Generating combined coverage report..."
-                        //sh """
-                            //mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
-                            //cp ${coverageFiles.join(';')} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
-                            ///home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
-                            //-targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
-                        //"""
-        
-                        //publishHTML([
-                            //allowMissing: false,
-                            //alwaysLinkToLastBuild: true,
-                            //keepAll: true,
-                            //reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
-                            //reportFiles: 'index.html',
-                            //reportName: 'Combined Coverage Report'
-                        //])
-                    //} else {
-                        //error 'No coverage files found'
-                    //}
-                }
-            }
-        }
-
-
-
-/*
-        stage('Coverage Report') {
-            steps {
-                script {
-                    def testOutput = sh(script: "dotnet test ${DOTNET_PROJECT_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
-                    def coverageFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }.join(';')
-                    echo "Coverage files: ${coverageFiles}"
-
-                    if (coverageFiles) {
-                        sh """
-                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
-                            cp ${coverageFiles} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
-                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
-                        """
-                    } else {
-                        error 'No coverage files found'
                     }
                 }
-                echo 'Publishing coverage report...'
-                publishHTML([ 
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
-                    reportFiles: 'index.html',
-                    reportName: 'Coverage Report'
-                ])
             }
         }
-        */
     }
 
     post {
@@ -239,10 +156,7 @@ def sendDiscordNotification(status) {
                 [**Build output**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
                 [**Test result**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
                 [**Coverage report**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
-            """,
-            footer: "Merge test Duration: ${currentBuild.durationString.replace(' and counting', '')}",
-            webhookURL: env.DISCORD_WEBHOOK_URL,
-            result: status == "Build Success" ? 'SUCCESS' : 'FAILURE'
+            """
         )
     }
 }
