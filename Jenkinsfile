@@ -119,7 +119,7 @@ pipeline {
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/coverage-report/${name}
                             /home/jenkins/.dotnet/tools/reportgenerator \
-                                -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/Rise.${name}.Tests/TestResults/${name}.xml \
+                                -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/Rise.${name}.Tests/TestResults/${name}.trx \
                                 -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/ \
                                 -reporttype:Html
                         """
