@@ -8,7 +8,10 @@ pipeline {
     environment {
         JENKINS_SERVER = 'http://139.162.132.174:8080'
         DOTNET_PROJECT_PATH = 'Rise.Server/Rise.Server.csproj'
-        DOTNET_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
+        DOMAIN_TEST_PATH = 'Rise.Domain.Tests/Rise.Domain.Tests.csproj'
+        CLIENT_TEST_PATH = 'Rise.Client.Tests/Rise.Client.Tests.csproj'
+        SERVER_TEST_PATH = 'Rise.Server.Tests/Rise.Server.Tests.csproj
+        SERVICE_TEST_PATH = 'Rise.Services.Tests/Rise.Services.Tests.csproj'
         REPO_OWNER = "Brahim-Mahfoudhi"
         REPO_NAME = "dev-repo"
         DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1301160382307766292/kROxjtgZ-XVOibckTMri2fy5-nNOEjzjPLbT9jEpr_R0UH9JG0ZXb2XzUsYGE0d3yk6I"
@@ -87,16 +90,28 @@ pipeline {
             }
         }
 
-        stage('Running Unit Tests') {
+          stage('Running Unit Tests') {
             steps {
-                echo 'Running unit tests and collecting Clover coverage data...'
-                sh """
-                    dotnet test ${DOTNET_TEST_PATH} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results.trx' \
-                    /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
-                    /p:CoverletOutputFormat=cobertura
-                """
+                script {
+                    def testPaths = [
+                        DOMAIN_TEST_PATH: 'Rise.Domain.Tests/Rise.Domain.Tests.csproj',
+                        CLIENT_TEST_PATH: 'Rise.Client.Tests/Rise.Client.Tests.csproj',
+                        SERVER_TEST_PATH: 'Rise.Server.Tests/Rise.Server.Tests.csproj',
+                        SERVICE_TEST_PATH: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
+                    ]
+                    
+                    testPaths.each { name, path ->
+                        echo "Running unit tests for ${name} located at ${path}..."
+                        sh """
+                            dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results-${name}.trx' \
+                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/${name}-coverage.xml' \
+                            /p:CoverletOutputFormat=cobertura
+                        """
+                    }
+                }
             }
         }
+
 
         stage('Coverage Report') {
             steps {
