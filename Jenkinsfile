@@ -96,7 +96,7 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests and Coverage Report') {
+        stage('Run Unit Tests') {
             steps {
                 script {
                     def testPaths = [
@@ -113,7 +113,7 @@ pipeline {
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
                             /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
                             /p:CoverletOutputFormat=cobertura
-                        """, returnStdout: true).trim()
+                        """, returnStdout: true)
                     }
                 }
             }
@@ -135,9 +135,6 @@ pipeline {
         }
         always {
             echo 'Build process has completed.'
-            echo 'Generate Test report...'
-            sh "/home/jenkins/.dotnet/tools/trx2junit --output ${TEST_RESULT_PATH} ${TRX_FILE_PATH}"
-            junit "${TRX_TO_XML_PATH}"
         }
     }
 }
