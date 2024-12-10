@@ -113,7 +113,7 @@ pipeline {
                         
                         def testOutput = sh(script: """
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
-                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
+                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/merge-pipeline/coverage/coverage.xml' \
                             /p:CoverletOutputFormat=cobertura
                         """, returnStdout: true).trim()
         
@@ -126,8 +126,8 @@ pipeline {
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/coverage-report/${name}
                             /home/jenkins/.dotnet/tools/reportgenerator \
-                                -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
-                                -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/ \
+                                -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage/coverage.cobertura.xml \
+                                -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/${name} \
                                 -reporttype:Html
                         """
         
@@ -144,17 +144,17 @@ pipeline {
                     if (coverageFiles.size() > 0) {
                         echo "Generating combined coverage report..."
                         sh """
-                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
-                            cp ${coverageFiles.join(';')} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
-                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
-                            -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
+                            mkdir -p /var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report/
+                            cp ${coverageFiles.join(';')} /var/lib/jenkins/agent/workspace/merge-pipeline/coverage/
+                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage/coverage.cobertura.xml \
+                            -targetdir:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report/ -reporttype:Html
                         """
         
                         publishHTML([
                             allowMissing: false,
                             alwaysLinkToLastBuild: true,
                             keepAll: true,
-                            reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
+                            reportDir: '/var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report',
                             reportFiles: 'index.html',
                             reportName: 'Combined Coverage Report'
                         ])
