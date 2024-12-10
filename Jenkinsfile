@@ -26,7 +26,7 @@ pipeline {
                 cleanWs(deleteDirs: true)
                 sshagent(credentials: ['jenkins-master-key']) {
                 sh '''
-                    ssh -i /var/lib/jenkins/.ssh/control_node -o StrictHostKeyChecking=no jenkins@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"
+                    ssh -i /var/lib/jenkins/.ssh/control_node -o StrictHostKeyChecking=no root@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"
                 '''
                 }
                 checkout scm
