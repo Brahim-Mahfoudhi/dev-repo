@@ -113,11 +113,27 @@ pipeline {
                             /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/${name}-coverage.xml' \
                             /p:CoverletOutputFormat=cobertura
                         """
+                        echo "Generating coverage report for ${name}..."
+                        sh """
+                            mkdir -p /var/lib/jenkins/agent/workspace/coverage-report/${name}
+                            /home/jenkins/.dotnet/tools/reportgenerator \
+                                -reports:/var/lib/jenkins/agent/workspace/coverage/${name}-coverage.xml \
+                                -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/${name} \
+                                -reporttype:Html
+                        """
+                        publishHTML([
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: "/var/lib/jenkins/agent/workspace/coverage-report/${name}",
+                            reportFiles: 'index.html',
+                            reportName: "Coverage Report for ${name}"
+                        ])
                     }
                 }
             }
         }
-
+/*
         stage('Coverage Report') {
             steps {
                 script {
@@ -146,6 +162,7 @@ pipeline {
                 ])
             }
         }
+        */
     }
 
     post {
