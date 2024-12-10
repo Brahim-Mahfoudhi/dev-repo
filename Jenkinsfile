@@ -111,24 +111,26 @@ pipeline {
                     testPaths.each { name, path ->
                         echo "Running unit tests for ${name} located at ${path}..."
                         
+                        // Run unit tests with code coverage collection
                         def testOutput = sh(script: """
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
-                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/merge-pipeline/coverage/coverage.xml' \
+                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
                             /p:CoverletOutputFormat=cobertura
                         """, returnStdout: true).trim()
         
+                        // Collect coverage file paths
                         def foundFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }
                         coverageFiles += foundFiles
         
                         echo "Coverage files: ${foundFiles.join(';')}"
                         
+                        // Generate coverage report for each test
                         echo "Generating coverage report for ${name}..."
                         sh """
-                            mkdir -p /var/lib/jenkins/agent/workspace/merge-pipeline/coverage/
-                            mkdir -p /var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report/
+                            mkdir -p /var/lib/jenkins/agent/workspace/coverage-report/${name}
                             /home/jenkins/.dotnet/tools/reportgenerator \
-                                -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage/coverage.cobertura.xml \
-                                -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/${name} \
+                                -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
+                                -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/ \
                                 -reporttype:Html
                         """
         
@@ -142,19 +144,21 @@ pipeline {
                         ])
                     }
         
+                    // Combine and generate overall coverage report if coverage files exist
                     if (coverageFiles.size() > 0) {
                         echo "Generating combined coverage report..."
                         sh """
-                            cp ${coverageFiles.join(';')} /var/lib/jenkins/agent/workspace/merge-pipeline/coverage/
-                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage/coverage.cobertura.xml \
-                            -targetdir:/var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report/ -reporttype:Html
+                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
+                            cp ${coverageFiles.join(';')} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
+                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
+                            -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
                         """
         
                         publishHTML([
                             allowMissing: false,
                             alwaysLinkToLastBuild: true,
                             keepAll: true,
-                            reportDir: '/var/lib/jenkins/agent/workspace/merge-pipeline/coverage-report',
+                            reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
                             reportFiles: 'index.html',
                             reportName: 'Combined Coverage Report'
                         ])
@@ -164,6 +168,7 @@ pipeline {
                 }
             }
         }
+
 
 
 /*
