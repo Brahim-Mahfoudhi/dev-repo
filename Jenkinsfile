@@ -112,7 +112,7 @@ pipeline {
                         // Run unit tests and collect coverage
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/coverage/${name}
-                            dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results-${name}.trx' \
+                            dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results.trx' \
                             /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/coverage/${name}-coverage.xml' \
                             /p:CoverletOutputFormat=cobertura
                         """
