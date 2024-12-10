@@ -75,7 +75,16 @@ pipeline {
             steps {
                 echo "Restoring dependencies..."
                 sh "dotnet restore ${DOTNET_PROJECT_PATH}"
-                sh "dotnet restore ${DOTNET_TEST_PATH}"
+                def testPaths = [
+                        DOMAIN_TEST_PATH: 'Rise.Domain.Tests/Rise.Domain.Tests.csproj',
+                        CLIENT_TEST_PATH: 'Rise.Client.Tests/Rise.Client.Tests.csproj',
+                        SERVER_TEST_PATH: 'Rise.Server.Tests/Rise.Server.Tests.csproj',
+                        SERVICE_TEST_PATH: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
+                    ]
+                    
+                    testPaths.each { name, path ->
+                        echo "Restoring unit tests for ${name} located at ${path}..."
+                        sh "dotnet restore ${path}"
             }
         }
 
