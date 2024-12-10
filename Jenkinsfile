@@ -110,16 +110,16 @@ pipeline {
                         echo "Running unit tests for ${name} located at ${path}..."
                         
                         sh """
-                            dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
-                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/coverage/${name}-coverage.xml' \
-                            /p:CoverletOutputFormat=cobertura
+                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results.trx' \
+                             /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
+                             /p:CoverletOutputFormat=cobertura
                         """
                         
                         echo "Generating coverage report for ${name}..."
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/coverage-report/${name}
                             /home/jenkins/.dotnet/tools/reportgenerator \
-                                -reports:/var/lib/jenkins/agent/workspace/coverage/${name}-coverage.xml \
+                                -reports:/var/lib/jenkins/agent/workspace/coverage/coverage.xml \
                                 -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/${name} \
                                 -reporttype:Html
                         """
