@@ -162,7 +162,7 @@ pipeline {
                 ])
             }
         }
-
+    }
 
     post {
         success {
