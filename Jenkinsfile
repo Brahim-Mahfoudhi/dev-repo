@@ -26,7 +26,7 @@ pipeline {
                 cleanWs(deleteDirs: true)
                 sshagent(credentials: ['jenkins-master-key']) {
                     sh '''
-                        ssh -i /var/lib/jenkins/.ssh/control_node -o StrictHostKeyChecking=no root@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/Dotnet-test-Pipeline@script"
+                        ssh -i /var/lib/jenkins/.ssh/control_node -o StrictHostKeyChecking=no root@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/dotnet-pipeline@script"
                     '''
                 }
                 checkout scm
@@ -103,18 +103,16 @@ pipeline {
                         Domain: 'Rise.Domain.Tests/Rise.Domain.Tests.csproj',
                         Client: 'Rise.Client.Tests/Rise.Client.Tests.csproj',
                         Server: 'Rise.Server.Tests/Rise.Server.Tests.csproj',
-                        Services: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
+                        Service: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
                     ]
         
                     testPaths.each { name, path ->
                         echo "Running unit tests for ${name} located at ${path}..."
-                        def testOutput = sh(script: """
-                            dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
-                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/coverage.xml' \
-                            /p:CoverletOutputFormat=cobertura
-                        """)
         
-                        echo "Test results for ${name}: ${testOutput}"
+                        sh """
+                            dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
+                            /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+                        """
                     }
                 }
             }
@@ -123,29 +121,24 @@ pipeline {
         stage('Coverage Report') {
             steps {
                 script {
-                    // Ensure the coverage directory exists
                     sh "mkdir -p /var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/"
         
-                    // Collect all the cobertura coverage files
-                    def coverageFiles = sh(script: "find /var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/ -name 'coverage.cobertura.xml'", returnStdout: true).trim().split("\n")
+                    def coverageFiles = sh(script: """
+                        find Rise.*/TestResults -type f -name 'coverage.cobertura.xml'
+                    """, returnStdout: true).trim().split("\n")
         
                     if (coverageFiles.size() > 0) {
                         echo "Found coverage files: ${coverageFiles.join(', ')}"
         
-                        // Create the report directory
-                        sh """
-                            mkdir -p /var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage-report/
-                        """
-                        
-                        // Copy coverage files to a dedicated location
                         coverageFiles.each { file ->
                             sh "cp ${file} /var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/"
                         }
         
-                        // Generate the coverage report using ReportGenerator
                         sh """
-                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/*.cobertura.xml \
-                            -targetdir:/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage-report/ -reporttype:Html
+                            /home/jenkins/.dotnet/tools/reportgenerator \
+                            -reports:/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/*.cobertura.xml \
+                            -targetdir:/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage-report/ \
+                            -reporttype:Html
                         """
                     } else {
                         error 'No coverage files found'
@@ -163,6 +156,7 @@ pipeline {
                 ])
             }
         }
+
     }
 
     post {
