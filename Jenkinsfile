@@ -109,12 +109,14 @@ pipeline {
                     testPaths.each { name, path ->
                         echo "Running unit tests for ${name} located at ${path}..."
         
-                        // Run tests and collect code coverage
                         def testOutput = sh(script: """
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
                             /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/${name}/' \
                             /p:CoverletOutputFormat=cobertura
                         """, returnStdout: true)
+
+                        sh "/home/jenkins/.dotnet/tools/trx2junit --output Rise.${name}.Tests/TestResults Rise.${name}.Tests/TestResults/${name}.trx"
+
         
                         echo "Test results for ${name}: ${testOutput}"
                     }
