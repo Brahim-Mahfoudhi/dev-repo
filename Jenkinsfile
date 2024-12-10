@@ -96,7 +96,7 @@ pipeline {
             }
         }
 
-        stage('Running Unit Tests') {
+        stage('Run Unit Tests and Coverage Report') {
             steps {
                 script {
                     def testPaths = [
@@ -105,25 +105,32 @@ pipeline {
                         Server: 'Rise.Server.Tests/Rise.Server.Tests.csproj',
                         Service: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
                     ]
+        
+                    def coverageFiles = []
                     
                     testPaths.each { name, path ->
                         echo "Running unit tests for ${name} located at ${path}..."
                         
-                        sh """
-                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
-                             /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
-                             /p:CoverletOutputFormat=cobertura
-                        """
+                        def testOutput = sh(script: """
+                            dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
+                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
+                            /p:CoverletOutputFormat=cobertura
+                        """, returnStdout: true).trim()
+        
+                        def foundFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }
+                        coverageFiles += foundFiles
+        
+                        echo "Coverage files: ${foundFiles.join(';')}"
                         
                         echo "Generating coverage report for ${name}..."
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/coverage-report/${name}
                             /home/jenkins/.dotnet/tools/reportgenerator \
-                                -reports:/var/lib/jenkins/agent/workspace/merge-pipeline/Rise.${name}.Tests/TestResults/${name}.trx \
+                                -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
                                 -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/ \
                                 -reporttype:Html
                         """
-                        
+        
                         publishHTML([
                             allowMissing: false,
                             alwaysLinkToLastBuild: true,
@@ -133,9 +140,31 @@ pipeline {
                             reportName: "Coverage Report for ${name}"
                         ])
                     }
+        
+                    if (coverageFiles.size() > 0) {
+                        echo "Generating combined coverage report..."
+                        sh """
+                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
+                            cp ${coverageFiles.join(';')} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
+                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml \
+                            -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
+                        """
+        
+                        publishHTML([
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
+                            reportFiles: 'index.html',
+                            reportName: 'Combined Coverage Report'
+                        ])
+                    } else {
+                        error 'No coverage files found'
+                    }
                 }
             }
         }
+
 
 /*
         stage('Coverage Report') {
@@ -181,6 +210,12 @@ pipeline {
             script {
                 sendDiscordNotification("Build Failed")
             }
+        }
+        always {
+            echo 'Build process has completed.'
+            echo 'Generate Test report...'
+            sh "/home/jenkins/.dotnet/tools/trx2junit --output ${TEST_RESULT_PATH} ${TRX_FILE_PATH}"
+            junit "${TRX_TO_XML_PATH}"
         }
     }
 }
