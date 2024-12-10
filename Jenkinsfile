@@ -108,12 +108,17 @@ pipeline {
                     
                     testPaths.each { name, path ->
                         echo "Running unit tests for ${name} located at ${path}..."
+                        
+                        // Run unit tests and collect coverage
                         sh """
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=test-results-${name}.trx' \
-                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/${name}-coverage.xml' \
+                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/coverage/${name}-coverage.xml' \
                             /p:CoverletOutputFormat=cobertura
                         """
+                        
                         echo "Generating coverage report for ${name}..."
+                        
+                        // Generate coverage report
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/coverage-report/${name}
                             /home/jenkins/.dotnet/tools/reportgenerator \
@@ -121,6 +126,8 @@ pipeline {
                                 -targetdir:/var/lib/jenkins/agent/workspace/coverage-report/${name} \
                                 -reporttype:Html
                         """
+                        
+                        // Publish the HTML coverage report
                         publishHTML([
                             allowMissing: false,
                             alwaysLinkToLastBuild: true,
@@ -133,6 +140,7 @@ pipeline {
                 }
             }
         }
+
 /*
         stage('Coverage Report') {
             steps {
