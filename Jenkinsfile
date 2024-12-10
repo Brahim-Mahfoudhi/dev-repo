@@ -18,32 +18,31 @@ pipeline {
     }
 
     stages {
-       stage('Clean Workspace') {
+        stage('Clean Workspace') {
             steps {
                 echo "Cleaning Git repository"
                 sh 'git clean -fdx'
                 echo "Fetching latest code"
                 cleanWs(deleteDirs: true)
                 sshagent(credentials: ['jenkins-master-key']) {
-                sh '''
-                    ssh -i /var/lib/jenkins/.ssh/control_node -o StrictHostKeyChecking=no root@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"
-                '''
+                    sh '''
+                        ssh -i /var/lib/jenkins/.ssh/control_node -o StrictHostKeyChecking=no root@139.162.132.174 "rm -rf /var/lib/jenkins/workspace/merge-pipeline@script"
+                    '''
                 }
                 checkout scm
             }
         }
 
-       stage('Checkout Code') {
+        stage('Checkout Code') {
             steps {
                 script {
                     if (params.sha1) {
                         echo "Checking out commit ${params.sha1}."
                         if (params.sha1.startsWith("origin/pr/")) {
                             echo "Fetching and checking out pull request ${params.sha1}."
-                            
                             def prNumber = params.sha1.split('/')[2]
                             
-                            ssha1gent(credentials: ['jenkins-master-key']) {
+                            sshagent(credentials: ['jenkins-master-key']) {
                                 sh "git fetch origin +refs/pull/${prNumber}/head:refs/remotes/origin/pr-${prNumber}-head"
                                 sh "git fetch origin +refs/pull/${prNumber}/merge:refs/remotes/origin/pr-${prNumber}-merge"
                             }
@@ -55,7 +54,6 @@ pipeline {
                         }
                     } else {
                         echo "No sha1 provided. Checking the main branch"
-                        
                         git credentialsId: 'jenkins-master-key', url: "git@github.com:${REPO_OWNER}/${REPO_NAME}.git", branch: 'main'
                     }
         
@@ -75,7 +73,8 @@ pipeline {
             steps {
                 echo "Restoring dependencies..."
                 sh "dotnet restore ${DOTNET_PROJECT_PATH}"
-                def testPaths = [
+                script {
+                    def testPaths = [
                         DOMAIN_TEST_PATH: 'Rise.Domain.Tests/Rise.Domain.Tests.csproj',
                         CLIENT_TEST_PATH: 'Rise.Client.Tests/Rise.Client.Tests.csproj',
                         SERVER_TEST_PATH: 'Rise.Server.Tests/Rise.Server.Tests.csproj',
@@ -85,6 +84,8 @@ pipeline {
                     testPaths.each { name, path ->
                         echo "Restoring unit tests for ${name} located at ${path}..."
                         sh "dotnet restore ${path}"
+                    }
+                }
             }
         }
 
@@ -95,7 +96,7 @@ pipeline {
             }
         }
 
-          stage('Running Unit Tests') {
+        stage('Running Unit Tests') {
             steps {
                 script {
                     def testPaths = [
@@ -117,18 +118,16 @@ pipeline {
             }
         }
 
-
         stage('Coverage Report') {
             steps {
                 script {
-                    def testOutput = sh(script: "dotnet test ${DOTNET_TEST_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
+                    def testOutput = sh(script: "dotnet test ${DOTNET_PROJECT_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
                     def coverageFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }.join(';')
                     echo "Coverage files: ${coverageFiles}"
 
                     if (coverageFiles) {
                         sh """
                             mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
-                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
                             cp ${coverageFiles} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
                             /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
                         """
@@ -170,21 +169,19 @@ def sendDiscordNotification(status) {
         discordSend(
             title: "${env.JOB_NAME} - ${status}",
             description: """
-                Build #${env.BUILD_NUMBER} ${status == "Merge test Success" ? 'completed successfully!' : 'has failed!'}
+                Build #${env.BUILD_NUMBER} ${status == "Build Success" ? 'completed successfully!' : 'has failed!'}
                 **Commit**: ${env.GIT_COMMIT}
                 **Author**: ${env.GIT_AUTHOR_NAME} <${env.GIT_AUTHOR_EMAIL}>
                 **Branch**: ${env.GIT_BRANCH}
                 **Message**: ${env.GIT_COMMIT_MESSAGE}
                 
-                [**Build output**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
-                [**Test result**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
-                [**Coverage report**](${JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
-                [**History**](${JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/testReport/history/)
+                [**Build output**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/${env.BUILD_NUMBER}/console)
+                [**Test result**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/testReport/)
+                [**Coverage report**](${env.JENKINS_SERVER}/job/${env.JOB_NAME}/lastBuild/Coverage_20Report/)
             """,
             footer: "Merge test Duration: ${currentBuild.durationString.replace(' and counting', '')}",
-            webhookURL: DISCORD_WEBHOOK_URL,
+            webhookURL: env.DISCORD_WEBHOOK_URL,
             result: status == "Build Success" ? 'SUCCESS' : 'FAILURE'
         )
     }
 }
-
