@@ -100,10 +100,10 @@ pipeline {
             steps {
                 script {
                     def testPaths = [
-                        DOMAIN_TEST_PATH: 'Rise.Domain.Tests/Rise.Domain.Tests.csproj',
-                        CLIENT_TEST_PATH: 'Rise.Client.Tests/Rise.Client.Tests.csproj',
-                        SERVER_TEST_PATH: 'Rise.Server.Tests/Rise.Server.Tests.csproj',
-                        SERVICE_TEST_PATH: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
+                        domain: 'Rise.Domain.Tests/Rise.Domain.Tests.csproj',
+                        client: 'Rise.Client.Tests/Rise.Client.Tests.csproj',
+                        server: 'Rise.Server.Tests/Rise.Server.Tests.csproj',
+                        service: 'Rise.Services.Tests/Rise.Services.Tests.csproj'
                     ]
                     
                     testPaths.each { name, path ->
