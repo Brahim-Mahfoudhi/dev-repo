@@ -155,7 +155,6 @@ pipeline {
                     string(credentialsId: 'BlazorClientSecret', variable: 'BLAZORCLIENTSECRET'),
                     string(credentialsId: 'smtp-credentials-id-username', variable: 'SMTP_USERNAME'),
                     string(credentialsId: 'smtp-credentials-id-password', variable: 'SMTP_PASSWORD'),
-                    string(credentialsId: 'FromEmail', variable: 'FROM_EMAIL')
                 ]) {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         script {
@@ -174,7 +173,6 @@ pipeline {
                                 export BLAZORCLIENTSECRET="${BLAZORCLIENTSECRET}"
                                 export SMTP_USERNAME="${SMTP_USERNAME}"
                                 export SMTP_PASSWORD="${SMTP_PASSWORD}"
-                                export FROM_EMAIL="${FROM_EMAIL}"
         
                                 # Updating appsettings.json with all credentials
                                 jq \'.ConnectionStrings.SqlServer = "${SQL_CONNECTION_STRING}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
@@ -199,22 +197,20 @@ pipeline {
                             sh """
                                 ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST} "bash ${remoteScript} && rm ${remoteScript}"
                             """
-                            sh """
-                                ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST} "screen -dmS rise_server dotnet /var/lib/jenkins/artifacts/Rise.Server.dll --urls 'http://0.0.0.0:5000;https://0.0.0.0:5001'"
-                            """
                         }
                     }
                 }
             }
         }
-
+    } 
+}
 
 
     post {
         success {
             echo 'Build and deployment completed successfully!'
             archiveArtifacts artifacts: '**/*.dll', fingerprint: true
-            // archiveArtifacts artifacts: "${TRX_FILE_PATH}", fingerprint: true
+            archiveArtifacts artifacts: "${TRX_FILE_PATH}", fingerprint: true
             script {
                 sendDiscordNotification("Build Success")
             }
@@ -227,9 +223,9 @@ pipeline {
         }
         always {
             echo 'Build process has completed.'
-            // echo 'Generate Test report...'
-            // sh "/home/jenkins/.dotnet/tools/trx2junit --output ${TEST_RESULT_PATH} ${TRX_FILE_PATH}"
-            // junit "${TRX_TO_XML_PATH}"
+            echo 'Generate Test report...'
+            sh "/home/jenkins/.dotnet/tools/trx2junit --output ${TEST_RESULT_PATH} ${TRX_FILE_PATH}"
+            junit "${TRX_TO_XML_PATH}"
         }
     }
 }
