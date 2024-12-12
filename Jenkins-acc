@@ -228,7 +228,7 @@ pipeline {
             junit "${TRX_TO_XML_PATH}"
         }
     }
-}
+
 
 def sendDiscordNotification(status) {
     script {
