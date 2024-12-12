@@ -160,7 +160,7 @@ pipeline {
                         script {
                             def remoteScript = "/tmp/deploy_script.sh"
                             def publishDir = "${PUBLISH_DIR_PATH}"
-        
+                            
                             // Creating the deploy script to inject credentials into appsettings.json
                             sh """
                                 echo '#!/bin/bash
@@ -174,19 +174,18 @@ pipeline {
                                 export SMTP_USERNAME="${SMTP_USERNAME}"
                                 export SMTP_PASSWORD="${SMTP_PASSWORD}"
         
-                                # Updating appsettings.json with all credentials
-                                jq \'.ConnectionStrings.SqlServer = "${SQL_CONNECTION_STRING}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.Auth0.Authority = "${AUTHORITY}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.Auth0.Audience = "${AUDIENCE}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.Auth0.M2MClientId = "${M2MCLIENTID}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.Auth0.M2MClientSecret = "${M2MCLIENTSECRET}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.Auth0.BlazorClientId = "${BLAZORCLIENTID}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.Auth0.BlazorClientSecret = "${BLAZORCLIENTSECRET}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.EmailSettings.SmtpServer = "smtp.gmail.com"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.EmailSettings.SmtpPort = 587\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.EmailSettings.SmtpUsername = "${SMTP_USERNAME}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.EmailSettings.SmtpPassword = "${SMTP_PASSWORD}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.EmailSettings.FromEmail = "buuthogent@gmail.com"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.ConnectionStrings.SqlServer = "${SQL_CONNECTION_STRING}" |
+                                       .Auth0.Authority = "${AUTHORITY}" |
+                                       .Auth0.Audience = "${AUDIENCE}" |
+                                       .Auth0.M2MClientId = "${M2MCLIENTID}" |
+                                       .Auth0.M2MClientSecret = "${M2MCLIENTSECRET}" |
+                                       .Auth0.BlazorClientId = "${BLAZORCLIENTID}" |
+                                       .Auth0.BlazorClientSecret = "${BLAZORCLIENTSECRET}" |
+                                       .EmailSettings.SmtpServer = "smtp.gmail.com" |
+                                       .EmailSettings.SmtpPort = 587 |
+                                       .EmailSettings.SmtpUsername = "${SMTP_USERNAME}" |
+                                       .EmailSettings.SmtpPassword = "${SMTP_PASSWORD}" |
+                                       .EmailSettings.FromEmail = "buuthogent@gmail.com"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
                                 ' > ${remoteScript}
                             """
         
