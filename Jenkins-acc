@@ -188,7 +188,7 @@ pipeline {
                                 jq \'.EmailSettings.SmtpPort = 587\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
                                 jq \'.EmailSettings.SmtpUsername = "${SMTP_USERNAME}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
                                 jq \'.EmailSettings.SmtpPassword = "${SMTP_PASSWORD}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
-                                jq \'.EmailSettings.FromEmail = "${FROM_EMAIL}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.EmailSettings.FromEmail = "buuthogent@gmail.com"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
                                 ' > ${remoteScript}
                             """
         
