@@ -16,7 +16,7 @@ pipeline {
         TRX_FILE_PATH = 'Rise.Domain.Tests/TestResults/test-results.trx'
         TEST_RESULT_PATH = 'Rise.Domain.Tests/TestResults'
         TRX_TO_XML_PATH = 'Rise.Domain.Tests/TestResults/test-results.xml'
-        PUBLISH_DIR_PATH = '/var/lib/jenkins/artifacts/'
+        PUBLISH_DIR_PATH = '/var/lib/jenkins/artifacts'
     }
 
     stages {
