@@ -88,47 +88,54 @@ pipeline {
         
                     testPaths.each { name, path ->
                         echo "Running unit tests for ${name} located at ${path}..."
-                        
-                        def testOutput = sh(script: """
+        
+                        sh """
                             dotnet test ${path} --collect:"XPlat Code Coverage" --logger 'trx;LogFileName=${name}.trx' \
-                            /p:CollectCoverage=true /p:CoverletOutput='/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.xml' \
-                            /p:CoverletOutputFormat=cobertura
-                        """, returnStdout: true)
+                            /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+                        """
                     }
                 }
             }
         }
-    /*  
+        
         stage('Coverage Report') {
             steps {
                 script {
-                    def testOutput = sh(script: "dotnet test ${DOTNET_TEST_PATH} --collect \"XPlat Code Coverage\"", returnStdout: true).trim()
-                    def coverageFiles = testOutput.split('\n').findAll { it.contains('coverage.cobertura.xml') }.join(';')
-                    echo "Coverage files: ${coverageFiles}"
+                    sh "mkdir -p /var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/"
         
-                    if (coverageFiles) {
+                    def coverageFiles = sh(script: """
+                        find Rise.*/TestResults -type f -name 'coverage.cobertura.xml'
+                    """, returnStdout: true).trim().split("\n")
+        
+                    if (coverageFiles.size() > 0) {
+                        echo "Found coverage files: ${coverageFiles.join(', ')}"
+        
+                        coverageFiles.each { file ->
+                            sh "cp ${file} /var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/"
+                        }
+        
                         sh """
-                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/
-                            mkdir -p /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
-                            cp ${coverageFiles} /var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/
-                            /home/jenkins/.dotnet/tools/reportgenerator -reports:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage/coverage.cobertura.xml -targetdir:/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report/ -reporttype:Html
+                            /home/jenkins/.dotnet/tools/reportgenerator \
+                            -reports:/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage/*.cobertura.xml \
+                            -targetdir:/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage-report/ \
+                            -reporttype:Html
                         """
                     } else {
                         error 'No coverage files found'
                     }
                 }
+        
                 echo 'Publishing coverage report...'
                 publishHTML([
                     allowMissing: false,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    reportDir: '/var/lib/jenkins/agent/workspace/dotnet_pipeline/coverage-report',
+                    reportDir: '/var/lib/jenkins/agent/workspace/Dotnet-test-Pipeline/coverage-report',
                     reportFiles: 'index.html',
                     reportName: 'Coverage Report'
                 ])
             }
         }
-    */
     
         stage('Publish Application') {
             steps {
@@ -139,39 +146,52 @@ pipeline {
         stage('Deploy to Remote Server') {
             steps {
                 withCredentials([
+                    string(credentialsId: 'SQLConnectionString', variable: 'SQL_CONNECTION_STRING'),
                     string(credentialsId: 'Authority', variable: 'AUTHORITY'),
                     string(credentialsId: 'Audience', variable: 'AUDIENCE'),
                     string(credentialsId: 'M2MClientId', variable: 'M2MCLIENTID'),
                     string(credentialsId: 'M2MClientSecret', variable: 'M2MCLIENTSECRET'),
                     string(credentialsId: 'BlazorClientId', variable: 'BLAZORCLIENTID'),
                     string(credentialsId: 'BlazorClientSecret', variable: 'BLAZORCLIENTSECRET'),
-                    string(credentialsId: 'SQLConnectionString', variable: 'SQL_CONNECTION_STRING')
+                    string(credentialsId: 'smtp-credentials-id-username', variable: 'SMTP_USERNAME'),
+                    string(credentialsId: 'smtp-credentials-id-password', variable: 'SMTP_PASSWORD'),
+                    string(credentialsId: 'FromEmail', variable: 'FROM_EMAIL')
                 ]) {
                     sshagent([JENKINS_CREDENTIALS_ID]) {
                         script {
                             def remoteScript = "/tmp/deploy_script.sh"
-                            def publishDir = "${PUBLISH_DIR_PATH}"                            
-                            
+                            def publishDir = "${PUBLISH_DIR_PATH}"
+        
+                            // Creating the deploy script to inject credentials into appsettings.json
                             sh """
                                 echo '#!/bin/bash
+                                export SQL_CONNECTION_STRING="${SQL_CONNECTION_STRING}"
                                 export AUTHORITY="${AUTHORITY}"
                                 export AUDIENCE="${AUDIENCE}"
                                 export M2MCLIENTID="${M2MCLIENTID}"
                                 export M2MCLIENTSECRET="${M2MCLIENTSECRET}"
                                 export BLAZORCLIENTID="${BLAZORCLIENTID}"
                                 export BLAZORCLIENTSECRET="${BLAZORCLIENTSECRET}"
-                                export SQL_CONNECTION_STRING="${SQL_CONNECTION_STRING}"
-                
-                                sed -i "s|\\\\"ConnectionStrings\\": {}|\\\\"ConnectionStrings\\": {\\\\"SqlServer\\": \\\\"Server=\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\\"}|g" ${publishDir}/appsettings.json
-                                sed -i "s|\\\\"ConnectionStrings\\": {}|\\\\"ConnectionStrings\\": {\\\\"SqlServer\\": \\\\"Server=\${SQL_CONNECTION_STRING};TrustServerCertificate=True;\\\\"}|g" ${publishDir}/appsettings.Development.json
-                                sed -i "s|\\\\"Auth0\\": {}|\\\\"Auth0\\": {\\\\"Authority\\": \\\\"https://dev-6yunsksn11owe71c.us.auth0.com/\\\\", \\\\"Audience\\": \\\\"https://api.rise.buut.com/\\\\", \\\\"M2MClientId\\": \\\\"\${M2MCLIENTID}\\", \\\\"M2MClientSecret\\": \\\\"\${M2MCLIENTSECRET}\\", \\\\"BlazorClientId\\": \\\\"\${BLAZORCLIENTID}\\", \\\\"BlazorClientSecret\\": \\\\"\${BLAZORCLIENTSECRET}\\\\"}|g" ${publishDir}/appsettings.json
-                                sed -i "s|\\\\"Logging\\": {}|\\\\"Logging\\": {\\\\"LogLevel\\": {\\\\"Default\\": \\\\"Information\\\\", \\\\"Microsoft.AspNetCore\\": \\\\"Warning\\\\"}}|g" ${publishDir}/appsettings.json
+                                export SMTP_USERNAME="${SMTP_USERNAME}"
+                                export SMTP_PASSWORD="${SMTP_PASSWORD}"
+                                export FROM_EMAIL="${FROM_EMAIL}"
+        
+                                # Updating appsettings.json with all credentials
+                                jq \'.ConnectionStrings.SqlServer = "${SQL_CONNECTION_STRING}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.Auth0.Authority = "${AUTHORITY}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.Auth0.Audience = "${AUDIENCE}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.Auth0.M2MClientId = "${M2MCLIENTID}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.Auth0.M2MClientSecret = "${M2MCLIENTSECRET}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.Auth0.BlazorClientId = "${BLAZORCLIENTID}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.Auth0.BlazorClientSecret = "${BLAZORCLIENTSECRET}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.EmailSettings.SmtpServer = "smtp.gmail.com"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.EmailSettings.SmtpPort = 587\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.EmailSettings.SmtpUsername = "${SMTP_USERNAME}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.EmailSettings.SmtpPassword = "${SMTP_PASSWORD}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
+                                jq \'.EmailSettings.FromEmail = "${FROM_EMAIL}"\' ${publishDir}/appsettings.json > ${publishDir}/tmp_appsettings.json && mv ${publishDir}/tmp_appsettings.json ${publishDir}/appsettings.json
                                 ' > ${remoteScript}
                             """
-
-                            sh """
-                                scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no -r ${PUBLISH_OUTPUT}/* ${REMOTE_HOST}:${PUBLISH_DIR_PATH}
-                            """
+        
                             sh """
                                 scp -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${remoteScript} ${REMOTE_HOST}:${remoteScript}
                             """
@@ -179,7 +199,7 @@ pipeline {
                             sh """
                                 ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST} "bash ${remoteScript} && rm ${remoteScript}"
                             """
-                             sh """
+                            sh """
                                 ssh -i ${SSH_KEY_FILE} -o StrictHostKeyChecking=no ${REMOTE_HOST} "screen -dmS rise_server dotnet /var/lib/jenkins/artifacts/Rise.Server.dll --urls 'http://0.0.0.0:5000;https://0.0.0.0:5001'"
                             """
                         }
@@ -187,7 +207,8 @@ pipeline {
                 }
             }
         }
-    }
+
+
 
     post {
         success {
